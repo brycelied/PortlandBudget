@@ -6,27 +6,13 @@
 <style>
 /* Layout: civic ledger — a slim masthead with the headline total, one control row, then the treemap beside a ranked ledger panel that stacks below on phones. */
 :root{
-  --bg:#f5f6f8; --surface:#ffffff; --ink:#13161b; --ink-2:#4a515c; --muted:#757d89;
-  --line:#dde1e7; --line-strong:#c3c9d2; --focus:#1c5cab; --chip:#13161b; --chip-ink:#ffffff;
-  --mix:36%; --mix-hover:52%; --mix-group:12%;
-  --c0:#2a78d6; --c1:#eb6834; --c2:#1baf7a; --c3:#eda100; --c4:#e87ba4; --c5:#008300; --c6:#6250d6; --c7:#e34948;
-  --font-ui:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-label:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    --bg:#0f1114; --surface:#171a1f; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
-    --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
-    --mix:44%; --mix-hover:60%; --mix-group:14%;
-    --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#c98500; --c4:#d55181; --c5:#008300; --c6:#9085e9; --c7:#e66767;
-    color-scheme:dark;
-  }
-}
-:root[data-theme="dark"]{
+  /* Single dark look, used in every browser regardless of system theme */
   --bg:#0f1114; --surface:#171a1f; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
   --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
   --mix:44%; --mix-hover:60%; --mix-group:14%;
   --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#c98500; --c4:#d55181; --c5:#008300; --c6:#9085e9; --c7:#e66767;
+  --font-ui:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-label:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -112,7 +98,7 @@ aside.panel{background:var(--surface);border:1px solid var(--line);border-radius
 .cats .row{cursor:default}
 
 #tip{position:fixed;z-index:20;pointer-events:none;max-width:300px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);
-  border-radius:6px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.14);font-size:13px;line-height:1.4}
+  border-radius:6px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:13px;line-height:1.4}
 #tip .t{font-weight:700;font-size:14px;margin-bottom:2px}
 #tip .big{font-family:var(--font-label);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
 #tip .m{color:var(--ink-2)}
