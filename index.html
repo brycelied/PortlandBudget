@@ -1,0 +1,503 @@
+<title>Portland Budget Treemap</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: civic ledger — a slim masthead with the headline total, one control row, then the treemap beside a ranked ledger panel that stacks below on phones. */
+:root{
+  --bg:#f5f6f8; --surface:#ffffff; --ink:#13161b; --ink-2:#4a515c; --muted:#757d89;
+  --line:#dde1e7; --line-strong:#c3c9d2; --focus:#1c5cab; --chip:#13161b; --chip-ink:#ffffff;
+  --mix:36%; --mix-hover:52%; --mix-group:12%;
+  --c0:#2a78d6; --c1:#eb6834; --c2:#1baf7a; --c3:#eda100; --c4:#e87ba4; --c5:#008300; --c6:#6250d6; --c7:#e34948;
+  --font-ui:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-label:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f1114; --surface:#171a1f; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
+    --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
+    --mix:44%; --mix-hover:60%; --mix-group:14%;
+    --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#c98500; --c4:#d55181; --c5:#008300; --c6:#9085e9; --c7:#e66767;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0f1114; --surface:#171a1f; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
+  --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
+  --mix:44%; --mix-hover:60%; --mix-group:14%;
+  --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#c98500; --c4:#d55181; --c5:#008300; --c6:#9085e9; --c7:#e66767;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{font-family:var(--font-label);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:4px 0 0;text-wrap:balance}
+.headline{text-align:right;min-width:0}
+.headline .num{font-family:var(--font-label);font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1;letter-spacing:-.01em}
+.headline .cap{font-size:13px;color:var(--ink-2);margin-top:4px}
+@media (max-width:640px){.headline{text-align:left}}
+
+.controls{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctl-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;padding:2px;background:var(--surface);gap:2px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap;user-select:none}
+.seg label:hover{color:var(--ink);background:color-mix(in oklab, var(--ink) 6%, transparent)}
+.seg input:checked + label{background:var(--chip);color:var(--chip-ink)}
+.seg input:focus-visible + label{outline:2px solid var(--focus);outline-offset:2px}
+.ctl[aria-disabled="true"]{opacity:.4}
+.ctl[aria-disabled="true"] label{cursor:not-allowed}
+
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:14px;min-height:28px}
+.crumbs button{all:unset;cursor:pointer;color:var(--ink-2);font-weight:500;padding:2px 4px;border-radius:4px}
+.crumbs button:hover{color:var(--ink);text-decoration:underline}
+.crumbs button:focus-visible{outline:2px solid var(--focus)}
+.crumbs .here{font-weight:700;color:var(--ink);padding:2px 4px}
+.crumbs .sep{color:var(--muted)}
+.crumbs .lvl{margin-left:auto;font-size:12px;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.chart-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+#tm{position:relative;width:100%;height:600px;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+@media (max-width:900px){#tm{height:480px}}
+@media (max-width:480px){#tm{height:420px}}
+.tile{position:absolute;all:unset;position:absolute;box-sizing:border-box;cursor:pointer;overflow:hidden;
+  background:color-mix(in oklab, var(--c) var(--mix), var(--surface));color:var(--ink);
+  padding:6px 7px;display:flex;flex-direction:column;gap:1px;border-radius:2px;
+  transition:left .32s ease, top .32s ease, width .32s ease, height .32s ease, background-color .15s}
+.tile:hover,.tile.sel{background:color-mix(in oklab, var(--c) var(--mix-hover), var(--surface))}
+.tile.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.tile:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;z-index:3}
+.tile .nm{font-family:var(--font-label);font-weight:600;line-height:1.12;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;overflow-wrap:break-word;hyphens:auto}
+.tile .vl{font-family:var(--font-label);font-weight:500;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group{position:absolute;box-sizing:border-box;background:color-mix(in oklab, var(--c) var(--mix-group), var(--surface));border-radius:3px;
+  transition:left .32s ease, top .32s ease, width .32s ease, height .32s ease}
+.ghead{all:unset;position:absolute;box-sizing:border-box;left:0;top:0;right:0;height:22px;padding:2px 7px;cursor:pointer;
+  font-family:var(--font-label);font-weight:700;font-size:13px;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.ghead:hover{text-decoration:underline}
+.ghead:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.ghead .gv{font-weight:500;color:var(--ink-2);text-transform:none;margin-left:6px;font-variant-numeric:tabular-nums}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;color:var(--ink-2)}
+.empty button,.btn{all:unset;cursor:pointer;border:1px solid var(--line-strong);border-radius:6px;padding:6px 12px;font-weight:600;color:var(--ink);background:var(--surface)}
+.empty button:focus-visible,.btn:focus-visible{outline:2px solid var(--focus)}
+.hint{font-size:13px;color:var(--muted)}
+.notes{font-size:13px;color:var(--ink-2)}
+.notes:empty{display:none}
+
+aside.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel h2{font-family:var(--font-label);font-size:19px;font-weight:700;margin:0;line-height:1.2;text-wrap:balance}
+.panel h3{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.panel .sub{font-size:13px;color:var(--ink-2);margin:2px 0 0}
+.ledger{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ledger li{border-top:1px solid var(--line)}
+.ledger li:first-child{border-top:0}
+.row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:2px 8px;align-items:center;width:100%;padding:7px 2px;cursor:pointer;border-radius:4px}
+.row.static{cursor:default}
+.row:hover:not(.static),.row.sel{background:color-mix(in oklab, var(--ink) 5%, transparent)}
+.row:focus-visible{outline:2px solid var(--focus)}
+.sw{width:10px;height:10px;border-radius:2px;background:var(--c)}
+.row .n{font-size:14px;min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.row .v{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.row .bar{grid-column:2 / 4;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.row .bar i{display:block;height:100%;background:var(--c);border-radius:2px}
+.row .pct{color:var(--muted);font-weight:500;font-size:12px;margin-left:6px}
+.scroll{max-height:420px;overflow-y:auto;margin-right:-6px;padding-right:6px}
+.cats .row{cursor:default}
+
+#tip{position:fixed;z-index:20;pointer-events:none;max-width:300px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);
+  border-radius:6px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.14);font-size:13px;line-height:1.4}
+#tip .t{font-weight:700;font-size:14px;margin-bottom:2px}
+#tip .big{font-family:var(--font-label);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+#tip .m{color:var(--ink-2)}
+#tip .k{color:var(--muted);font-size:12px;margin-top:6px}
+#tip table{border-collapse:collapse;width:100%;margin-top:6px;font-variant-numeric:tabular-nums}
+#tip td{padding:1px 0;color:var(--ink-2)}
+#tip td:last-child{text-align:right;color:var(--ink)}
+
+footer.src{border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--ink-2);display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 28px}
+footer.src p{margin:0;max-width:62ch}
+footer.src b{color:var(--ink)}
+@media (prefers-reduced-motion: reduce){.tile,.group{transition:none}}
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow">City of Portland · FY 2026-27 Adopted Budget</p>
+      <h1 id="h1">Citywide budget</h1>
+    </div>
+    <div class="headline" aria-live="polite">
+      <div class="num" id="hnum">$8.55B</div>
+      <div class="cap" id="hcap">All funds · Total budget</div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="ctl">
+      <span class="ctl-label" id="lbl-fund">Funds</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-fund">
+        <input type="radio" name="fund" id="fund-all" value="all" checked><label for="fund-all">All funds</label>
+        <input type="radio" name="fund" id="fund-gf" value="gf"><label for="fund-gf">General Fund</label>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" id="lbl-measure">Budget measure</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-measure">
+        <input type="radio" name="measure" id="measure-total" value="total" checked><label for="measure-total">Total budget</label>
+        <input type="radio" name="measure" id="measure-op" value="op"><label for="measure-op">Operating</label>
+        <input type="radio" name="measure" id="measure-cap" value="cap"><label for="measure-cap">Capital</label>
+      </div>
+    </div>
+    <div class="ctl" id="ctl-by" aria-disabled="true">
+      <span class="ctl-label" id="lbl-by">Bureau breakdown</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-by">
+        <input type="radio" name="by" id="by-program" value="program" checked disabled><label for="by-program">By program</label>
+        <input type="radio" name="by" id="by-fund" value="fund" disabled><label for="by-fund">By fund</label>
+      </div>
+    </div>
+  </div>
+
+  <nav class="crumbs" id="crumbs" aria-label="Treemap level"></nav>
+
+  <div class="main">
+    <div class="chart-col">
+      <div id="tm" role="group" aria-label="Budget treemap"></div>
+      <div class="hint" id="hint"></div>
+      <div class="notes" id="notes"></div>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <footer class="src">
+    <p><b>Source.</b> City of Portland Ad Hoc Reporting Tool export, FY 2026-27 Adopted Budget (expense requirements). All-funds total ties to the Adopted Budget's Table 1 ($8,546,060,062); the General Fund total ties to Figure 10 ($1,186,002,037).</p>
+    <p><b>Total budget</b> is the legal budget under Oregon Local Budget Law: bureau expenses plus fund-level requirements (contingency, debt service, fund transfers, reserves and ending fund balance). It counts internal transactions between funds more than once. <b>Capital</b> is spending on Capital Improvement Plan projects ($1.19B), and <b>Operating</b> is everything else ($7.35B), matching the Adopted Budget's Table 10.</p>
+    <p><b>General Fund</b> means Fund 100 only. Prosper Portland shows only its City-budgeted amount. Values are in nominal dollars; tiles under about 0.3% of the view may be too small to label, so hover or use the list to read them.</p>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+const D = {"sa":["Public Works","Community & Economic Development","City Operations","City Administrator","Public Safety","City Council","Office of the City Auditor","Office of the Mayor"],"bu":["Bureau of Emergency Communications","Bureau of Environmental Services","Bureau of Fleet & Facilities","Bureau of Human Resources","Bureau of Planning & Sustainability","Bureau of Technology Services","City Administrator","City Budget Office","Council","Fire & Police Disability & Retirement","Fund and Debt Management","Office of City Operations","Office of Community and Civic Life","Office of Community and Econ Development","Office of Community-Based Police Accountability","Office of Equity","Office of Government Relations","Office of Public Works","Office of the Chief Financial Officer","Office of the City Attorney","Office of the City Auditor","Office of the Mayor","Office of the Public Safety DCA","Portland Bureau of Emergency Management","Portland Bureau of Transportation","Portland Children's Levy","Portland Fire & Rescue","Portland Housing Bureau","Portland Parks & Recreation","Portland Permitting & Development","Portland Police Bureau","Prosper Portland","Special Appropriations","Water Bureau"],"buSA":[4,0,2,2,1,2,3,2,5,2,3,2,3,1,2,3,3,0,3,3,6,7,4,4,0,1,4,1,0,1,4,1,2,0],"pg":["9-1-1 Operations","Accounting","Adapt to Impact","Administration & Support","Affordable Multifamily Housing","Area Planning","Audit Services","Behavioral Health Unit","Budget & Economics","Business Advancement","Business Solutions","Business Support","Cable Communications","Capital Improvements","Chief & Staff","Child Abuse Services","City Recorder","Citywide Equity Program","Civil Rights Program","Class/Compensation","Combination Inspections","Comm Equity & Engagement","Comm-based police acct","Commercial Inspections","Commissioner's Office","Communications","Community","Community Engagement","Community and Neighborhood Involvement Center","Compliance Services","Comprehensive & Strategic Planning","Customer Relations","Customer Service","DP - Comm Partnerships","Debt Management","Development Services","Disability and Retirement","Distribution","Economic Opportunity","Emergency Management","Emergency Operations","Engineering","Enterprise Business Solution","Enterprise Operations Management","Enterprise Support","Facilities Services","Fleet Services","Focused Intervention Team - FIT","Forensic Evidence","General Planning","Government Relations","Grants Management","HR Corporate Services","Hearings Office","Homeless Services","Homeowner Access & Retention","Hydroelectric Power","Inclusive Entrepreneurship","Independent Review","Information Security","Information Technology","Infrastructure","Land Use Services","Legal Services","Maintenance","Mayor's Office","Neighborhood Inspections","Neighborhood Livability Services","O&M","Office of Events and Film","Office of Small Business","Ombudsman Office","Operations","Operations and Strategic Support","Oregon PERS Contributions","Parking Operations","Person Crimes Investigation","Personnel","Plan Review","Police IT","Policy, Research & Innovation","Portland Children's Levy","Portland Solutions","Precinct Patrol","Prevention","Printing & Distribution","Procurement","Production Services","Project Management Office","Public Infrastructure Permitting","Public Safety Systems Revitalization Program","Recreation","Regulatory Compliance","Reimagine Oregon","Rental Services","Retirement System Payments","Revenue Division","Risk Management","Site Development","Small Biz & Middle Income Hsg Fin Assist","Small Business Tenanting & Leasing","Special Appropriation - City Support Services","Special Appropriation - Public Safety","Special Appropriations - Community Development","Strategic Services","Supply","Support","Support Center","Sustainability Education & Assistance","Tactical Emergency Response","Tech Services","Traffic Division","Training","Transit Police","Transmission & Terminal Storage","Treasury","Treatment","Urban Forestry","Urban Forestry Tree Regulation","Waste Reduction & Recycling","Well-Being & Occupational Health","Workforce Recruitment Training"],"fd":["100 - General Fund","200 - Transportation Operating Fund","201 - Assessment Collection Fund","202 - Emergency Communication Fund","203 - Development Services Fund","204 - Property Management License Fund","209 - Convention and Tourism Fund","210 - General Reserve Fund","211 - Special Finance and Resource Fund","212 - Transportation Reserve Fund","213 - Housing Investment Fund","214 - Public Election Fund","216 - Children's Investment Fund","217 - Grants Fund","218 - Community Development Block Grant Fund","219 - HOME Grant Fund","220 - Portland Parks Memorial Fund","221 - Tax Increment Financing Reimbursement Fund","222 - Police Special Revenue Fund","223 - Arts Education & Access Fund","224 - Community Solar Fund","225 - Inclusionary Housing Fund","226 - Housing Property Fund","227 - Recreational Marijuana Tax Fund","228 - Cannabis Licensing Fund","229 - PDX Clean Energy Community Benefits Fund","230 - Affordable Housing Development Fund","231 - Citywide Obligations Reserve Fund","232 - 2020 Parks Local Option Levy Fund","233 - Fire Special Revenue Fund","302 - Bonded Debt Interest and Sinking Fund","305 - Pension Debt Redemption Fund","311 - Bancroft Bond Interest and Sinking Fund","313 - North Macadam URA Debt Redemption Fund","314 - Special Projects Debt Service Fund","315 - Gateway URA Debt Redemption Fund","317 - Governmental Bond Redemption Fund","325 - Cully Tax Increment Fin Dist Debt Svc","326 - 82nd Ave Area TIF District Debt Service","327 - East 205 TIF District Debt Service","328 - Sumner-Parkrose-Argay-Columbia TIF Debt Service","401 - Local Improvement District Fund","402 - Parks Capital Improvement Program Fund","405 - Fire Capital Fund","500 - Parks Endowment Fund","600 - Sewer System Operating Fund","601 - Hydroelectric Power Operating Fund","602 - Water Fund","603 - Golf Fund","604 - Portland International Raceway Fund","605 - Solid Waste Management Fund","606 - Parking Facilities Fund","607 - Spectator Venues & Visitor Activities Fund","608 - Environmental Remediation Fund","609 - Sewer System Debt Redemption Fund","612 - Water Bond Sinking Fund","614 - Sewer System Construction Fund","615 - Water Construction Fund","617 - Sewer System Rate Stabilization Fund","618 - Hydroelectric Power Renewal Replacement Fund","700 - Health Insurance Operating Fund","701 - Facilities Services Operating Fund","702 - CityFleet Operating Fund","703 - Printing & Distribution Services Operating Fund","704 - Insurance and Claims Operating Fund","705 - Workers' Comp. Self Insurance Operating Fund","706 - Technology Services Fund","707 - Portland Police Assoc Health Insurnc Fund","800 - Fire & Police Disability & Retirement Fund","801 - Fire & Police Disability & Retirement Res Fund"],"mo":[["PERSONAL","Personnel",true],["EMS","External Materials and Services",true],["IMS","Internal Materials and Services",true],["CAPITAL","Capital Outlay",true],["BOND","Debt Service",false],["DEBTSVR","Debt Service Reserves",false],["CONT","Contingency",false],["FNDXFER","Fund Transfers",false],["RFE","Reserved for Future Expenditure",false],["ENDBAL","Ending Fund Balance",false]],"rows":[[6,3,0,1,0,575913],[6,3,0,2,0,233886],[6,3,0,0,0,4099791],[6,3,25,6,0,6001],[6,3,25,1,0,132977],[6,3,25,2,0,75876],[6,3,25,0,0,938653],[6,82,0,1,0,45779494],[6,82,0,2,0,1669761],[6,82,0,0,0,8058363],[6,82,13,1,0,8590000],[6,82,25,1,0,500000],[10,8,0,4,0,14970564],[10,8,0,6,0,11302782],[10,8,0,1,0,5366149],[10,8,0,7,0,57879532],[10,8,0,2,0,1177351],[10,8,7,6,0,1675051],[10,8,7,7,0,5309904],[10,8,7,8,0,86233876],[10,8,23,6,0,1322376],[10,8,27,6,0,17994033],[10,8,27,7,0,19070160],[10,34,8,4,0,100000],[10,34,8,6,0,18431821],[10,34,8,1,0,21125000],[10,34,8,7,0,38967100],[10,34,30,4,0,30108750],[10,34,30,9,0,1000000],[10,34,31,4,0,7709759],[10,34,31,5,0,109250],[10,34,33,1,0,4200000],[10,34,34,4,0,12441224],[10,34,34,1,0,35000],[10,34,35,4,0,8741010],[10,34,35,5,0,3743990],[10,34,36,4,0,14148176],[10,34,37,4,0,3905000],[10,34,38,4,0,8879619],[10,34,39,4,0,568643],[10,34,40,5,0,188],[12,2,0,1,0,20000],[12,2,0,2,0,67702],[12,2,0,0,0,363155],[12,3,0,1,0,19324],[12,3,0,2,0,31792],[12,3,0,0,0,856359],[12,28,0,1,0,2572248],[12,28,0,2,0,227535],[12,28,0,0,0,688088],[15,3,0,1,0,35389],[15,3,0,2,0,388167],[15,3,0,0,0,795443],[15,17,0,1,0,23000],[15,17,0,2,0,74],[15,17,0,0,0,506716],[15,18,0,2,0,1304],[15,18,0,0,0,1185344],[15,21,0,0,0,14059],[16,50,0,1,0,458460],[16,50,0,2,0,375158],[16,50,0,0,0,1859433],[18,1,0,1,0,150682],[18,1,0,2,0,394264],[18,1,0,0,0,3516807],[18,3,0,1,0,34464],[18,3,0,2,0,56412],[18,3,0,0,0,847429],[18,34,0,1,0,324342],[18,34,0,2,0,138235],[18,34,0,0,0,955606],[18,34,32,4,0,3500000],[18,34,32,5,0,8126660],[18,34,41,4,0,2642000],[18,34,41,1,0,18000],[18,34,41,7,0,12260707],[18,96,0,1,0,8628321],[18,96,0,1,1,105517],[18,96,0,2,0,5282666],[18,96,0,2,1,84568],[18,96,0,0,0,26879459],[18,96,0,0,1,820097],[18,96,2,6,0,101245],[18,96,5,1,0,11649700],[18,96,5,7,0,25000],[18,96,5,2,0,432778],[18,96,6,1,0,22762333],[18,96,6,7,0,25000],[18,96,6,2,0,661625],[18,96,19,6,0,3912231],[18,96,19,1,0,10243300],[18,96,19,7,0,25000],[18,96,19,2,0,1985946],[18,96,19,0,0,509700],[18,96,27,6,0,12462268],[18,96,27,1,1,983983],[18,96,27,7,0,1836584],[18,96,27,2,0,10989701],[18,96,27,2,1,180180],[18,96,27,0,1,217875],[18,96,41,4,0,135455],[18,96,41,6,0,750726],[18,96,41,1,0,27400],[18,96,41,7,0,24805],[18,96,41,2,0,2237768],[18,97,64,4,0,141998],[18,97,64,6,0,20918600],[18,97,64,1,0,14076985],[18,97,64,7,0,560589],[18,97,64,2,0,5996236],[18,97,64,0,0,2450283],[18,97,65,4,0,132821],[18,97,65,6,0,9808194],[18,97,65,1,0,4774434],[18,97,65,7,0,187647],[18,97,65,2,0,982671],[18,97,65,0,0,2100712],[18,115,0,1,0,351910],[18,115,0,2,0,403098],[18,115,0,0,0,1600832],[19,63,0,1,0,1144912],[19,63,0,2,0,2305144],[19,63,0,0,0,19039418],[8,3,0,1,0,295300],[8,3,0,2,0,632848],[8,3,0,0,0,2532760],[8,24,0,1,0,2998048],[8,24,0,2,0,2703675],[8,24,0,0,0,11653485],[2,45,61,4,0,10984699],[2,45,61,3,1,16517066],[2,45,61,6,0,57188270],[2,45,61,1,0,24589924],[2,45,61,7,0,2535625],[2,45,61,2,0,7053831],[2,45,61,0,0,10522253],[2,46,25,3,1,5958227],[2,46,25,1,1,153140],[2,46,25,2,1,459900],[2,46,25,0,0,367892],[2,46,25,0,1,54456],[2,46,62,4,0,4645918],[2,46,62,3,0,641370],[2,46,62,3,1,42511903],[2,46,62,6,0,54507664],[2,46,62,6,1,793764],[2,46,62,1,0,21014907],[2,46,62,1,1,3347814],[2,46,62,7,0,2188469],[2,46,62,2,0,4528055],[2,46,62,2,1,259286],[2,46,62,0,0,15438411],[3,19,0,1,0,99000],[3,19,0,2,0,481],[3,19,0,0,0,1800548],[3,43,0,1,0,17000],[3,43,0,2,0,19010],[3,43,0,0,0,5822770],[3,52,0,1,0,561098],[3,52,0,2,0,118119],[3,52,0,0,0,2310094],[3,52,60,4,0,15370627],[3,52,60,6,0,7574420],[3,52,60,1,0,174810336],[3,52,60,7,0,512514],[3,52,60,2,0,756835],[3,52,60,0,0,2779506],[3,52,67,6,0,3424795],[3,52,67,1,0,23562994],[3,73,0,1,0,180891],[3,73,0,2,0,2051380],[3,73,0,0,0,4836389],[3,120,0,0,0,239985],[3,120,60,1,0,222625],[3,120,60,2,0,50621],[3,120,60,0,0,551331],[3,121,0,1,0,720600],[3,121,0,2,0,26304],[3,121,0,0,0,4698249],[3,121,23,1,0,532000],[5,3,66,4,0,903791],[5,3,66,6,0,8439994],[5,3,66,1,0,640868],[5,3,66,7,0,4706794],[5,3,66,2,0,1116031],[5,3,66,0,0,1715928],[5,10,66,6,0,196681],[5,10,66,1,0,1896076],[5,10,66,1,1,144530],[5,10,66,2,0,994550],[5,10,66,0,0,13313696],[5,10,66,0,1,407370],[5,25,66,6,0,20161972],[5,25,66,1,0,5223063],[5,25,66,1,1,4276313],[5,25,66,2,0,657425],[5,25,66,0,0,7045605],[5,25,66,0,1,696636],[5,31,66,1,0,27998],[5,31,66,2,0,162147],[5,31,66,0,0,2483860],[5,42,66,1,0,2476306],[5,42,66,1,1,4811670],[5,42,66,2,0,371111],[5,42,66,0,0,5758848],[5,42,66,0,1,767300],[5,59,66,1,0,1550764],[5,59,66,2,0,149300],[5,59,66,0,0,1916399],[5,79,66,1,0,1439969],[5,79,66,1,1,1028000],[5,79,66,2,0,789308],[5,79,66,0,0,7983667],[5,79,66,0,1,131200],[5,85,63,4,0,257695],[5,85,63,3,0,96044],[5,85,63,6,0,2059266],[5,85,63,1,0,2868640],[5,85,63,7,0,324640],[5,85,63,2,0,921796],[5,85,63,0,0,1722699],[5,87,66,1,0,2237908],[5,87,66,1,1,1301182],[5,87,66,2,0,372537],[5,87,66,0,0,5245580],[5,87,66,0,1,303363],[5,88,66,1,0,49030],[5,88,66,1,1,341000],[5,88,66,2,0,185556],[5,88,66,0,0,2924897],[5,88,66,0,1,215340],[5,107,66,6,0,12640552],[5,107,66,1,0,5065178],[5,107,66,7,0,300000],[5,107,66,2,0,622103],[5,107,66,0,0,8043952],[7,8,0,1,0,485314],[7,8,0,2,0,536896],[7,8,0,0,0,3319387],[9,36,68,4,0,97094356],[9,36,68,3,0,135000],[9,36,68,6,0,15428730],[9,36,68,1,0,189410349],[9,36,68,7,0,1072386],[9,36,68,2,0,65596835],[9,36,68,0,0,3514676],[9,36,69,9,0,750000],[9,36,69,7,0,750000],[11,3,0,1,0,566218],[11,3,0,2,0,2265400],[11,3,0,0,0,19930412],[11,45,61,6,0,1793511],[11,45,61,1,0,5996610],[11,45,61,2,0,913560],[11,45,61,0,0,724229],[11,51,0,1,0,34423],[11,51,0,2,0,285667],[11,51,0,0,0,1859815],[11,51,13,2,0,821],[11,51,13,0,0,1918430],[11,58,0,1,0,98530],[11,58,0,2,0,550018],[11,58,0,0,0,2826681],[11,86,0,1,0,1354555],[11,86,0,2,0,680386],[11,86,0,0,0,9222866],[11,86,27,6,0,1731891],[11,86,27,7,0,925000],[14,22,0,1,0,5322855],[14,22,0,2,0,5693988],[14,22,0,0,0,5000000],[32,3,0,1,0,7000],[32,3,11,1,0,1838007],[32,3,11,2,0,48530],[32,3,11,0,0,354736],[32,5,0,1,0,790060],[32,5,0,2,0,20810],[32,101,0,1,0,1311139],[32,103,0,1,0,5310233],[32,103,0,2,0,57689],[32,103,0,0,0,236368],[4,3,0,1,0,682232],[4,3,0,2,0,921853],[4,3,0,0,0,1053108],[4,5,0,1,0,8000],[4,5,0,0,0,1623259],[4,5,13,0,0,590123],[4,12,0,1,0,89550],[4,12,0,2,0,14000],[4,12,0,0,0,1327642],[4,12,13,1,0,367135],[4,30,0,1,0,9600],[4,30,0,0,0,2481958],[4,30,13,1,0,50000],[4,30,13,0,0,813263],[4,49,0,1,0,205600],[4,49,0,2,0,30000],[4,49,0,0,0,1545248],[4,49,13,0,0,396219],[4,67,0,1,0,1180337],[4,67,0,0,0,624559],[4,80,0,1,0,4991638],[4,80,0,2,0,2000],[4,80,0,0,0,439249],[4,80,20,9,0,133093],[4,80,25,6,0,422361687],[4,80,25,1,0,201083579],[4,80,25,7,0,45781400],[4,80,25,2,0,27648397],[4,80,25,0,0,11782899],[4,80,50,6,0,1294],[4,80,50,1,0,5900],[4,80,50,7,0,-1294],[4,80,50,2,0,323584],[4,80,50,0,0,931583],[4,108,13,1,0,496180],[4,108,13,0,0,1686863],[4,108,50,1,0,480731],[4,108,50,2,0,894345],[4,108,50,0,0,846516],[4,119,13,1,0,1526552],[4,119,13,0,0,643496],[4,119,50,4,0,101089],[4,119,50,6,0,102956],[4,119,50,1,0,5601950],[4,119,50,9,0,5654698],[4,119,50,7,0,1527939],[4,119,50,2,0,1456381],[4,119,50,0,0,2340111],[13,3,0,1,0,425739],[13,3,0,2,0,350230],[13,3,0,0,0,12238299],[13,3,52,4,0,3260250],[13,3,52,3,0,11900000],[13,3,52,6,0,7265392],[13,3,52,1,0,6034514],[13,3,52,7,0,559175],[13,3,52,2,0,860290],[13,3,52,0,0,687029],[13,103,0,1,0,2362079],[13,103,0,2,0,173160],[13,103,0,0,0,911558],[13,103,19,1,0,6774173],[13,103,19,2,0,32719],[13,103,19,0,0,188142],[25,81,12,6,0,4456062],[25,81,12,1,0,27729168],[25,81,12,7,0,25000],[25,81,12,2,0,82510],[25,81,12,0,0,1491740],[27,3,0,1,0,1180356],[27,3,0,2,0,3063879],[27,3,0,0,0,5060686],[27,3,10,6,0,89460],[27,3,10,1,0,5000],[27,3,10,7,0,459914],[27,3,10,2,0,1369684],[27,3,10,0,0,430770],[27,3,13,1,0,1152396],[27,3,13,2,0,229961],[27,3,13,0,0,307078],[27,3,14,1,0,55098],[27,3,14,2,0,410000],[27,3,14,0,0,1430565],[27,3,15,0,0,429071],[27,3,17,6,0,1336],[27,3,17,7,0,355996],[27,3,17,2,0,288528],[27,3,21,2,0,254201],[27,3,21,0,0,72539],[27,3,22,4,0,696236],[27,3,22,6,0,92250],[27,3,22,1,0,5577930],[27,3,22,7,0,232709],[27,3,22,2,0,459265],[27,3,22,0,0,100302],[27,3,26,2,0,1529671],[27,4,0,1,0,-101],[27,4,0,7,0,352400],[27,4,0,2,0,7944],[27,4,0,0,0,698166],[27,4,10,6,0,4764919],[27,4,10,1,0,19912049],[27,4,10,0,0,171086],[27,4,13,1,0,41087688],[27,4,13,0,0,622574],[27,4,14,4,0,814788],[27,4,14,1,0,3764220],[27,4,14,0,0,101575],[27,4,15,1,0,3322996],[27,4,15,0,0,29900],[27,4,17,6,0,16338551],[27,4,17,1,0,37194211],[27,4,17,2,0,3000],[27,4,17,0,0,110818],[27,4,21,6,0,10840850],[27,4,21,1,0,17294779],[27,4,21,7,0,308556],[27,4,21,2,0,28474],[27,4,21,0,0,1263811],[27,4,22,6,0,4176402],[27,4,22,0,0,15397],[27,4,25,1,0,32401893],[27,4,25,2,0,533149],[27,4,25,0,0,1429372],[27,4,26,6,0,831432],[27,4,26,1,0,4947450],[27,4,26,0,0,616107],[27,38,14,1,0,2137173],[27,54,13,1,0,2912983],[27,54,13,0,0,129859],[27,55,0,1,0,2441800],[27,55,0,2,0,615],[27,55,0,0,0,477213],[27,55,10,1,0,1700000],[27,55,10,0,0,203506],[27,55,13,1,0,1873990],[27,55,13,2,0,11292],[27,55,13,0,0,676611],[27,55,14,1,0,2068129],[27,55,14,0,0,411171],[27,55,17,1,0,4691349],[27,94,0,2,0,1707],[27,94,10,1,0,25372013],[27,94,10,2,0,498229],[27,94,10,0,0,1364846],[29,3,4,4,0,1899072],[29,3,4,6,0,10334946],[29,3,4,1,0,2753176],[29,3,4,7,0,4565371],[29,3,4,2,0,16319464],[29,3,4,0,0,2877396],[29,3,24,2,0,521258],[29,20,4,1,0,372092],[29,20,4,2,0,394874],[29,20,4,0,0,7362234],[29,23,4,1,0,402520],[29,23,4,2,0,242125],[29,23,4,0,0,6576391],[29,29,4,1,0,106616],[29,29,4,2,0,58347],[29,29,4,0,0,3558610],[29,29,24,6,0,1360509],[29,29,24,1,0,128646],[29,29,24,7,0,76883],[29,29,24,2,0,57099],[29,29,24,0,0,807577],[29,35,4,1,0,103117],[29,35,4,2,0,818342],[29,35,4,0,0,6493458],[29,62,4,1,0,180460],[29,62,4,2,0,272854],[29,62,4,0,0,7162174],[29,66,4,1,0,315880],[29,66,4,2,0,147064],[29,66,4,0,0,2318445],[29,78,4,1,0,229280],[29,78,4,2,0,69043],[29,78,4,0,0,7123690],[29,89,4,1,0,391750],[29,89,4,2,0,81379],[29,89,4,0,0,10128396],[29,98,4,1,0,68320],[29,98,4,2,0,28985],[29,98,4,0,0,2567980],[29,118,25,1,0,133473],[29,118,25,2,0,2484625],[29,118,25,0,0,4467978],[31,3,0,1,0,496266],[31,9,0,1,0,2718033],[31,57,0,1,0,4802879],[31,57,23,1,0,1241994],[31,69,0,1,0,1181615],[31,69,23,1,0,56080],[31,70,0,1,0,1116088],[31,93,23,1,0,2044760],[31,99,0,1,0,2341762],[31,100,0,1,0,707754],[20,3,0,1,0,684550],[20,3,0,2,0,1322151],[20,3,0,0,0,3116663],[20,6,0,1,0,542700],[20,6,0,2,0,63962],[20,6,0,0,0,1963769],[20,16,0,1,0,228750],[20,16,0,2,0,2003768],[20,16,0,0,0,2704522],[20,53,0,1,0,115500],[20,53,0,2,0,284420],[20,53,0,0,0,874433],[20,71,0,1,0,31600],[20,71,0,2,0,25292],[20,71,0,0,0,637902],[21,65,0,1,0,253272],[21,65,0,2,0,1175729],[21,65,0,0,0,2096478],[0,0,3,4,0,378399],[0,0,3,6,0,6844],[0,0,3,1,0,2129347],[0,0,3,7,0,1917544],[0,0,3,2,0,7224006],[0,0,3,0,0,25771847],[0,3,3,6,0,8667],[0,3,3,1,0,165000],[0,3,3,2,0,325389],[0,3,3,0,0,1753789],[22,3,0,1,0,772723],[22,3,0,2,0,1655365],[22,3,0,0,0,21289617],[22,3,23,0,0,1509360],[22,14,0,1,0,6428402],[22,14,0,2,0,63429],[22,14,0,0,0,679462],[22,102,0,1,0,2158810],[22,102,0,2,0,128179],[22,102,0,0,0,2395652],[22,102,13,1,0,708200],[22,102,13,2,0,955],[22,102,13,0,0,195388],[22,103,0,1,0,118604],[22,103,0,2,0,6930],[22,103,0,0,0,526352],[23,39,0,1,0,570340],[23,39,0,2,0,1474047],[23,39,0,0,0,2863341],[23,39,13,1,0,1740572],[23,39,13,2,0,17298],[23,39,13,0,0,953430],[26,3,0,3,0,-1200000],[26,3,0,3,1,6600000],[26,3,0,1,0,9158300],[26,3,0,7,0,325293],[26,3,0,2,0,15461577],[26,3,0,0,0,15290819],[26,3,13,2,0,133838],[26,3,13,0,0,3566162],[26,3,27,1,0,325293],[26,3,27,7,0,700000],[26,3,43,6,0,5615000],[26,40,0,1,0,334000],[26,40,0,2,0,154322],[26,40,0,0,0,148177478],[26,40,29,0,0,1460000],[26,84,0,1,0,376432],[26,84,0,2,0,395676],[26,84,0,0,0,12177915],[26,84,13,1,0,220000],[30,7,0,1,0,2523339],[30,7,0,2,0,19245],[30,7,0,0,0,4136804],[30,14,0,1,0,84683],[30,14,0,2,0,918662],[30,14,0,0,0,7089755],[30,15,0,1,0,428428],[30,15,0,2,0,335374],[30,15,0,0,0,5866849],[30,27,0,1,0,73795],[30,27,0,2,0,514868],[30,27,0,0,0,716918],[30,27,13,1,0,50000],[30,27,13,0,0,45000],[30,44,0,1,0,2666253],[30,44,0,2,0,21812271],[30,44,0,0,0,11544056],[30,44,13,1,0,205000],[30,44,18,3,0,850000],[30,47,0,1,0,5461],[30,47,0,2,0,114480],[30,47,0,0,0,3511788],[30,48,0,1,0,13649],[30,48,0,2,0,19668],[30,48,0,0,0,8654679],[30,60,0,1,0,1265208],[30,60,0,2,0,10037565],[30,74,0,1,0,295194],[30,74,0,2,0,466651],[30,74,0,0,0,2193302],[30,76,0,1,0,954706],[30,76,0,2,0,1449406],[30,76,0,0,0,23962561],[30,76,13,1,0,126000],[30,76,13,2,0,4791],[30,76,13,0,0,315000],[30,77,0,1,0,421507],[30,77,0,2,0,402244],[30,77,0,0,0,4990729],[30,83,0,1,0,157950],[30,83,0,2,0,8576010],[30,83,0,0,0,95014209],[30,83,13,1,0,5000],[30,83,13,2,0,1000],[30,83,13,0,0,25000],[30,90,0,1,0,-47300],[30,90,0,2,0,173100],[30,90,0,0,0,922813],[30,95,0,1,0,2473971],[30,95,0,2,0,2172337],[30,95,0,0,0,10928147],[30,95,18,3,0,1000000],[30,102,0,1,0,1950],[30,102,0,2,0,85626],[30,102,0,0,0,6917009],[30,104,0,2,0,3756],[30,104,0,0,0,2183241],[30,109,0,1,0,220495],[30,109,0,2,0,2950163],[30,109,0,0,0,17988461],[30,109,13,1,0,25000],[30,109,18,3,0,4993000],[30,111,0,1,0,509003],[30,111,0,2,0,2167948],[30,111,0,0,0,6533685],[30,111,13,1,0,40000],[30,111,13,0,0,62500],[30,112,0,1,0,1374535],[30,112,0,2,0,3099046],[30,112,0,0,0,29188493],[30,112,13,0,0,20000],[30,113,0,1,0,2340],[30,113,0,2,0,44527],[30,113,0,0,0,1346660],[1,11,45,4,0,5198124],[1,11,45,3,0,82000],[1,11,45,6,0,92294582],[1,11,45,5,0,80000],[1,11,45,1,0,41876866],[1,11,45,7,0,240955809],[1,11,45,2,0,29150241],[1,11,45,0,0,25224484],[1,11,53,4,0,2334],[1,11,53,6,0,32349713],[1,11,53,1,0,9881713],[1,11,53,7,0,1598996],[1,11,53,2,0,2244257],[1,11,53,0,0,838955],[1,11,54,4,0,150275167],[1,11,54,5,0,7226722],[1,11,56,4,0,1029791],[1,11,56,6,0,229522938],[1,11,56,7,0,177612847],[1,11,58,6,0,154116712],[1,11,58,7,0,3000000],[1,33,45,3,0,42500],[1,33,45,3,1,350000],[1,33,45,1,0,1740454],[1,33,45,2,0,4450274],[1,33,45,0,0,9382698],[1,41,45,3,0,5870000],[1,41,45,3,1,118968310],[1,41,45,6,0,454587],[1,41,45,1,0,636462],[1,41,45,1,1,41657364],[1,41,45,2,0,1233745],[1,41,45,2,1,7290000],[1,41,45,0,0,10913606],[1,41,45,0,1,28305905],[1,68,13,1,0,1092000],[1,68,45,3,0,425500],[1,68,45,1,0,32452224],[1,68,45,2,0,33386204],[1,68,45,0,0,36656797],[1,110,45,3,0,170000],[1,110,45,1,0,3387966],[1,110,45,2,0,4157650],[1,110,45,0,0,11128978],[17,3,0,1,0,28400],[17,3,0,2,0,172456],[17,3,0,0,0,26413949],[24,3,1,4,0,17959656],[24,3,1,6,0,20691213],[24,3,1,1,0,9173216],[24,3,1,7,0,31571586],[24,3,1,2,0,-39906661],[24,3,1,0,0,13427090],[24,3,9,6,0,15309490],[24,3,25,1,0,302000],[24,3,25,2,0,-302000],[24,13,1,3,1,57296945],[24,13,1,6,0,1565645],[24,13,1,1,0,1728342],[24,13,1,1,1,10244474],[24,13,1,2,0,318924],[24,13,1,2,1,26483842],[24,13,1,0,0,15796080],[24,13,1,0,1,21438603],[24,13,13,3,0,750000],[24,13,13,3,1,31668542],[24,13,13,1,1,8169057],[24,13,13,2,0,200185],[24,13,13,2,1,13355497],[24,13,13,0,0,560658],[24,13,13,0,1,13446900],[24,13,25,3,1,25599875],[24,13,25,1,1,609043],[24,13,25,2,1,3534900],[24,13,25,0,1,3770300],[24,64,1,6,0,8975675],[24,64,1,1,0,8280543],[24,64,1,7,0,50000],[24,64,1,2,0,33716357],[24,64,1,2,1,2100300],[24,64,1,0,0,46583449],[24,64,1,0,1,2699700],[24,64,25,1,0,2765104],[24,64,25,0,0,166096],[24,72,1,6,0,21329967],[24,72,1,1,0,24533975],[24,72,1,1,1,243100],[24,72,1,2,0,20949503],[24,72,1,2,1,442600],[24,72,1,0,0,42197679],[24,72,1,0,1,314300],[24,72,13,1,0,3256135],[24,72,13,2,0,271402],[24,72,13,0,0,422533],[24,72,25,1,0,6732693],[24,72,25,2,0,2621628],[24,72,25,0,0,2582611],[24,75,1,6,0,6979939],[24,75,1,1,0,8776360],[24,75,1,2,0,4050512],[24,75,1,0,0,19843149],[24,75,51,6,0,33792],[24,75,51,1,0,7882848],[24,75,51,7,0,770179],[24,75,51,2,0,952069],[24,75,51,0,0,1006881],[28,26,0,1,0,1624074],[28,26,0,2,0,1278984],[28,26,0,0,0,12805807],[28,26,16,1,0,24379],[28,26,44,1,0,1320],[28,26,44,8,0,37725],[28,61,0,3,0,162919],[28,61,0,1,0,7900870],[28,61,0,1,1,377500],[28,61,0,7,0,50000],[28,61,0,2,0,7521036],[28,61,0,0,0,41061510],[28,61,13,3,1,1640618],[28,61,13,1,0,73725],[28,61,13,1,1,1987968],[28,61,13,0,1,41569],[28,61,16,6,0,1750000],[28,61,16,1,0,3765280],[28,61,16,2,0,205847],[28,61,16,0,0,213085],[28,61,25,3,1,200000],[28,61,25,6,0,495],[28,61,25,2,0,-495],[28,61,42,4,0,183359],[28,61,42,3,0,515590],[28,61,42,3,1,42799435],[28,61,42,6,0,360829],[28,61,42,1,0,85036],[28,61,42,1,1,40957284],[28,61,42,7,0,1232221],[28,61,42,2,0,104303],[28,61,42,2,1,2744533],[28,61,42,0,0,4367526],[28,61,42,0,1,1556650],[28,61,44,1,0,59059],[28,61,44,8,0,129500],[28,91,0,1,0,5201459],[28,91,0,2,0,2152265],[28,91,0,0,0,41862725],[28,91,13,1,0,45000],[28,91,16,1,0,1522271],[28,91,16,2,0,11151],[28,91,16,0,0,193485],[28,91,48,4,0,325535],[28,91,48,6,0,4367833],[28,91,48,1,0,11395984],[28,91,48,7,0,1248520],[28,91,48,2,0,1307345],[28,91,48,0,0,5384609],[28,91,49,4,0,321418],[28,91,49,6,0,1057320],[28,91,49,1,0,1079895],[28,91,49,7,0,177544],[28,91,49,2,0,306001],[28,91,49,0,0,1276077],[28,106,0,1,0,17971301],[28,106,0,7,0,515590],[28,106,0,2,0,13095278],[28,106,0,0,0,15820957],[28,106,16,6,0,738],[28,106,16,1,0,4439731],[28,106,16,2,0,2833100],[28,106,16,0,0,832286],[28,106,25,6,0,-168630],[28,106,25,1,0,44350],[28,106,25,2,0,173821],[28,106,25,0,0,505431],[28,106,28,6,0,532515],[28,106,28,7,0,90655436],[28,106,42,6,0,50007191],[28,106,42,1,0,1375000],[28,106,42,2,0,952938],[28,106,42,0,0,498987],[28,106,48,6,0,3979],[28,106,48,1,0,-26],[28,106,48,2,0,386648],[28,117,0,1,0,1386584],[28,117,0,2,0,-125023],[28,117,0,0,0,2645374],[28,117,13,1,0,15000],[28,117,13,0,0,164959],[28,117,16,1,0,4202400],[28,117,16,2,0,1297098],[28,117,16,0,0,487129],[28,117,25,6,0,1120315],[28,117,25,1,0,9038514],[28,117,25,2,0,4516392],[28,117,25,0,0,11443525],[33,3,47,4,0,8104895],[33,3,47,3,1,1273000],[33,3,47,6,0,180850175],[33,3,47,1,0,18009200],[33,3,47,1,1,877139],[33,3,47,7,0,175842264],[33,3,47,2,0,16634457],[33,3,47,2,1,31991],[33,3,47,0,0,16623473],[33,3,47,0,1,1825870],[33,3,55,4,0,98915316],[33,3,55,5,0,1685],[33,3,57,9,0,268137094],[33,3,57,7,0,622553862],[33,32,47,3,1,10614000],[33,32,47,1,0,4395149],[33,32,47,1,1,8600549],[33,32,47,2,0,9759486],[33,32,47,0,0,16068372],[33,32,47,0,1,492451],[33,37,47,3,1,20079952],[33,37,47,1,0,8280192],[33,37,47,1,1,6011649],[33,37,47,2,0,3176574],[33,37,47,2,1,6137324],[33,37,47,0,0,25544289],[33,37,47,0,1,21201075],[33,56,25,3,0,1000000],[33,56,25,1,0,1040000],[33,56,25,0,0,400000],[33,56,46,4,0,39842],[33,56,46,6,0,2141355],[33,56,46,1,0,2857967],[33,56,46,7,0,150261],[33,56,46,2,0,367598],[33,56,46,0,0,516374],[33,56,59,6,0,111456],[33,92,47,1,0,1863309],[33,92,47,2,0,718785],[33,92,47,0,0,7937022],[33,105,47,3,1,7834886],[33,105,47,1,0,5372540],[33,105,47,1,1,310000],[33,105,47,2,0,1396832],[33,105,47,2,1,62426],[33,105,47,0,0,4771536],[33,105,47,0,1,1685688],[33,114,47,3,1,96654039],[33,114,47,1,0,405180],[33,114,47,1,1,1300000],[33,114,47,2,0,417625],[33,114,47,2,1,1600613],[33,114,47,0,0,1702032],[33,114,47,0,1,2110348],[33,116,47,3,1,393831908],[33,116,47,1,0,5192423],[33,116,47,1,1,2553000],[33,116,47,2,0,121143],[33,116,47,2,1,2641035],[33,116,47,0,0,2130497],[33,116,47,0,1,3257057]]};
+const GF = D.fd.findIndex(f => f.startsWith('100 '));
+const st = {fund:'all', measure:'total', by:'program', sa:null, bu:null, sel:null};
+const $ = id => document.getElementById(id);
+const tm = $('tm'), tip = $('tip');
+
+function money(v, exact){
+  if (exact) return (v<0?'−$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+  const a = Math.abs(v), s = v<0?'−$':'$';
+  if (a >= 1e9) return s + (a/1e9).toFixed(2) + 'B';
+  if (a >= 1e8) return s + (a/1e6).toFixed(0) + 'M';
+  if (a >= 1e6) return s + (a/1e6).toFixed(1) + 'M';
+  if (a >= 1e3) return s + (a/1e3).toFixed(0) + 'K';
+  return s + a.toFixed(0);
+}
+const pct = (a,b) => b ? (a/b*100 >= 10 ? (a/b*100).toFixed(0) : (a/b*100).toFixed(1)) + '%' : '—';
+const fundName = i => D.fd[i].replace(/^(\d+) - /, '');
+const fundNum = i => D.fd[i].split(' ')[0];
+const color = sa => `var(--c${sa})`;
+
+function rows(){
+  return D.rows.filter(r => (st.fund === 'all' || r[2] === GF) && (st.measure === 'total' || r[4] === (st.measure === 'cap' ? 1 : 0)));
+}
+function sumBy(rs, keyFn){
+  const m = new Map();
+  for (const r of rs){ const k = keyFn(r); m.set(k, (m.get(k)||0) + r[5]); }
+  return m;
+}
+const total = rs => rs.reduce((s,r) => s + r[5], 0);
+
+/* ---------- build the current view ---------- */
+function view(){
+  const all = rows();
+  const cityTotal = total(all);
+  if (st.bu !== null){
+    const scope = all.filter(r => r[0] === st.bu);
+    const key = st.by === 'program' ? (r => r[1]) : (r => r[2]);
+    const m = sumBy(scope, key);
+    const items = [...m].map(([k,v]) => ({id:(st.by==='program'?'p':'f')+k, k, v,
+      name: st.by==='program' ? D.pg[k] : fundName(k), tag: st.by==='fund' ? 'Fund ' + fundNum(k) : '',
+      sa: D.buSA[st.bu], leaf:true}));
+    return {level:'bureau', all, scope, cityTotal, nodeTotal: total(scope), items};
+  }
+  if (st.sa !== null){
+    const scope = all.filter(r => D.buSA[r[0]] === st.sa);
+    const m = sumBy(scope, r => r[0]);
+    const items = [...m].map(([k,v]) => ({id:'b'+k, k, v, name:D.bu[k], sa:st.sa, kind:'bu'}));
+    return {level:'sa', all, scope, cityTotal, nodeTotal: total(scope), items};
+  }
+  const m = sumBy(all, r => r[0]);
+  const groups = D.sa.map((name, i) => ({id:'s'+i, k:i, name, sa:i, kind:'sa', children:[]}));
+  for (const [k,v] of m) groups[D.buSA[k]].children.push({id:'b'+k, k, v, name:D.bu[k], sa:D.buSA[k], kind:'bu'});
+  groups.forEach(g => g.v = g.children.reduce((s,c) => s + c.v, 0));
+  return {level:'city', all, scope: all, cityTotal, nodeTotal: cityTotal, groups: groups.filter(g => g.v > 0)};
+}
+
+/* ---------- render ---------- */
+let lastLevelKey = '';
+function render(){
+  const V = view();
+  const levelKey = V.level + '|' + st.sa + '|' + st.bu + '|' + st.by;
+  const sameLevel = levelKey === lastLevelKey; lastLevelKey = levelKey;
+  if (!sameLevel) tm.innerHTML = '';
+
+  // header
+  const scopeLabel = st.fund === 'all' ? 'All funds' : 'General Fund';
+  const measLabel = {total:'Total budget', op:'Operating budget', cap:'Capital budget'}[st.measure];
+  $('h1').textContent = st.bu !== null ? D.bu[st.bu] : st.sa !== null ? D.sa[st.sa] : 'Citywide budget';
+  $('hnum').textContent = money(V.nodeTotal);
+  $('hnum').title = money(V.nodeTotal, true);
+  $('hcap').textContent = `${scopeLabel} · ${measLabel}` + (V.level !== 'city' ? ` · ${pct(V.nodeTotal, V.cityTotal)} of City ${st.fund === 'gf' ? 'General Fund' : 'total'}` : '');
+
+  // breakdown control
+  const byOn = V.level === 'bureau';
+  $('ctl-by').setAttribute('aria-disabled', byOn ? 'false' : 'true');
+  $('by-program').disabled = $('by-fund').disabled = !byOn;
+
+  renderCrumbs(V);
+
+  // collect negatives
+  let items, negs = [];
+  if (V.level === 'city'){
+    V.groups.forEach(g => { negs.push(...g.children.filter(c => c.v < 0)); g.children = g.children.filter(c => c.v > 0); });
+  } else {
+    negs = V.items.filter(d => d.v < 0);
+    items = V.items.filter(d => d.v > 0);
+  }
+
+  const W = tm.clientWidth, H = tm.clientHeight;
+  const hasData = V.level === 'city' ? V.groups.length : items.length;
+  tm.querySelectorAll('.empty').forEach(n => n.remove());
+  if (!hasData){
+    tm.innerHTML = '';
+    const e = document.createElement('div'); e.className = 'empty';
+    const where = st.bu !== null ? D.bu[st.bu] : st.sa !== null ? D.sa[st.sa] : 'The City';
+    e.innerHTML = `<div><b>${esc(where)}</b> has no ${esc(measLabel.toLowerCase())}${st.fund==='gf' ? ' in the General Fund' : ''}.</div>`;
+    const b = document.createElement('button'); b.textContent = 'Show all funds, total budget';
+    b.onclick = () => { $('fund-all').checked = true; $('measure-total').checked = true; st.fund = 'all'; st.measure = 'total'; render(); };
+    e.appendChild(b); tm.appendChild(e); lastLevelKey = '';
+  } else {
+    let root;
+    if (V.level === 'city'){
+      root = d3.hierarchy({children: V.groups}).sum(d => d.children ? 0 : d.v).sort((a,b) => b.value - a.value);
+      d3.treemap().size([W,H]).paddingOuter(d => d.depth === 1 ? 2 : 3).paddingTop(d => d.depth === 1 ? (d.y1 - d.y0 > 60 && d.x1 - d.x0 > 70 ? 22 : 2) : 3)
+        .paddingInner(d => d.depth === 0 ? 4 : 2).round(true).tile(d3.treemapSquarify.ratio(1.3))(root);
+    } else {
+      root = d3.hierarchy({children: items}).sum(d => d.children ? 0 : d.v).sort((a,b) => b.value - a.value);
+      d3.treemap().size([W,H]).padding(2).round(true).tile(d3.treemapSquarify.ratio(1.3))(root);
+    }
+    drawNodes(root, V, sameLevel);
+  }
+
+  // hint + notes
+  $('hint').textContent = V.level === 'city' ? 'Tiles are bureaus, grouped by service area. Select a bureau to open it, or a service area heading to see only that area.'
+    : V.level === 'sa' ? 'Select a bureau to break it down by program or fund.'
+    : `Select a ${st.by} to see what it pays for.`;
+  $('notes').textContent = negs.length ? 'Not drawn because the amount nets below zero (offsetting credits): ' +
+    negs.map(n => `${n.name} (${money(n.v)})`).join('; ') + '. Totals above include it.' : '';
+
+  renderPanel(V, items || V.groups);
+}
+
+function drawNodes(root, V, sameLevel){
+  const keep = new Set();
+  const place = (el, n) => { el.style.left = n.x0+'px'; el.style.top = n.y0+'px'; el.style.width = Math.max(0,n.x1-n.x0)+'px'; el.style.height = Math.max(0,n.y1-n.y0)+'px'; };
+  if (V.level === 'city'){
+    for (const g of root.children){
+      const gid = 'g-' + g.data.id; keep.add(gid);
+      let ge = tm.querySelector(`[data-key="${gid}"]`);
+      if (!ge){
+        ge = document.createElement('div'); ge.className = 'group'; ge.dataset.key = gid;
+        ge.style.setProperty('--c', color(g.data.sa));
+        const h = document.createElement('button'); h.className = 'ghead';
+        h.onclick = () => go(g.data.k, null);
+        h.addEventListener('pointermove', ev => showTip(ev, g.data, V, 'sa'));
+        h.addEventListener('pointerleave', hideTip);
+        ge.appendChild(h); tm.appendChild(ge);
+      }
+      place(ge, g);
+      const h = ge.querySelector('.ghead');
+      const showHead = (g.y1 - g.y0 > 60 && g.x1 - g.x0 > 70);
+      h.hidden = !showHead;
+      h.innerHTML = `${esc(g.data.name)}<span class="gv">${money(g.value)}</span>`;
+      h.setAttribute('aria-label', `${g.data.name} service area, ${money(g.value)}. Open service area.`);
+    }
+  }
+  for (const n of root.leaves()){
+    const d = n.data, key = 't-' + d.id; keep.add(key);
+    let el = tm.querySelector(`[data-key="${key}"]`);
+    if (!el){
+      el = document.createElement('button'); el.className = 'tile'; el.dataset.key = key;
+      el.innerHTML = '<span class="nm"></span><span class="vl"></span>';
+      el.addEventListener('pointermove', ev => showTip(ev, d, view(), V.level === 'bureau' ? 'leaf' : 'bu'));
+      el.addEventListener('pointerleave', hideTip);
+      el.addEventListener('click', () => {
+        hideTip();
+        if (V.level === 'bureau'){ st.sel = st.sel === d.id ? null : d.id; render(); }
+        else go(d.sa, d.k);
+      });
+      tm.appendChild(el);
+    }
+    el.style.setProperty('--c', color(d.sa));
+    place(el, n);
+    const w = n.x1 - n.x0, h = n.y1 - n.y0;
+    const longest = Math.max(...d.name.split(/\s+/).map(s => s.length));
+    const fs = Math.max(11, Math.min(20, Math.sqrt(w*h) / 11, (w - 14) / (longest * 0.55)));
+    const nm = el.querySelector('.nm'), vl = el.querySelector('.vl');
+    const lines = Math.max(1, Math.floor((h - 14 - fs) / (fs*1.12)));
+    nm.style.fontSize = fs + 'px'; nm.style.webkitLineClamp = lines;
+    vl.style.fontSize = Math.max(11, fs*0.82) + 'px';
+    const showName = w > 46 && h > 22, showVal = w > 54 && h > 22 + fs*1.6;
+    nm.textContent = showName ? d.name : ''; nm.hidden = !showName;
+    vl.textContent = showVal ? money(d.v) + (d.tag ? ' · ' + d.tag : '') : ''; vl.hidden = !showVal;
+    el.style.padding = (w < 40 || h < 26) ? '2px 4px' : '';
+    el.classList.toggle('sel', st.sel === d.id);
+    el.setAttribute('aria-label', `${d.name}, ${money(d.v)}, ${pct(d.v, V.nodeTotal)} of ${V.level==='city'?'City':'this view'}. ` +
+      (V.level === 'bureau' ? 'Show details.' : 'Open bureau.'));
+    el.setAttribute('aria-pressed', V.level === 'bureau' ? String(st.sel === d.id) : null);
+    if (V.level !== 'bureau') el.removeAttribute('aria-pressed');
+  }
+  tm.querySelectorAll('[data-key]').forEach(el => { if (!keep.has(el.dataset.key)) el.remove(); });
+  // groups go behind tiles: move tiles to end in DOM order
+  tm.querySelectorAll('.tile').forEach(t => tm.appendChild(t));
+}
+
+function renderCrumbs(V){
+  const c = $('crumbs'); c.innerHTML = '';
+  const add = (label, fn) => {
+    if (fn){ const b = document.createElement('button'); b.textContent = label; b.onclick = fn; c.appendChild(b); }
+    else { const s = document.createElement('span'); s.className = 'here'; s.textContent = label; s.setAttribute('aria-current','page'); c.appendChild(s); }
+  };
+  const sep = () => { const s = document.createElement('span'); s.className = 'sep'; s.textContent = '›'; s.setAttribute('aria-hidden','true'); c.appendChild(s); };
+  add('City of Portland', V.level === 'city' ? null : () => go(null, null));
+  if (st.sa !== null){ sep(); add(D.sa[st.sa], V.level === 'sa' ? null : () => go(st.sa, null)); }
+  if (st.bu !== null){ sep(); add(D.bu[st.bu], null); }
+  const l = document.createElement('span'); l.className = 'lvl';
+  l.textContent = V.level === 'city' ? 'City level' : V.level === 'sa' ? 'Service area level' : 'Bureau level';
+  c.appendChild(l);
+}
+
+function ledgerRow(d, base, onClick, selected){
+  const li = document.createElement('li');
+  const b = document.createElement(onClick ? 'button' : 'div');
+  b.className = 'row' + (onClick ? '' : ' static') + (selected ? ' sel' : '');
+  b.style.setProperty('--c', color(d.sa));
+  const w = base > 0 ? Math.max(0, Math.min(100, d.v / base * 100)) : 0;
+  b.innerHTML = `<span class="sw"></span><span class="n">${esc(d.name)}${d.tag ? ` <span class="pct">${esc(d.tag)}</span>` : ''}</span>
+    <span class="v">${money(d.v)}<span class="pct">${pct(d.v, base)}</span></span><span class="bar"><i style="width:${w}%"></i></span>`;
+  if (onClick){ b.onclick = onClick; if (selected !== undefined) b.setAttribute('aria-pressed', String(!!selected)); }
+  li.appendChild(b); return li;
+}
+
+function renderPanel(V, list){
+  const p = $('panel'); p.innerHTML = '';
+  const head = document.createElement('div');
+  const sec = (title, sub) => { const s = document.createElement('section'); s.innerHTML = `<h3>${esc(title)}</h3>` + (sub ? `<p class="sub" style="margin:-4px 0 6px">${esc(sub)}</p>` : ''); return s; };
+  const ul = () => { const u = document.createElement('ul'); u.className = 'ledger'; return u; };
+
+  if (V.level === 'city'){
+    head.innerHTML = `<h2>Service areas</h2><p class="sub">${money(V.nodeTotal)} across ${V.groups.length} service areas</p>`;
+    p.appendChild(head);
+    const s = sec('Ranked by budget'), u = ul();
+    V.groups.slice().sort((a,b) => b.v - a.v).forEach(g => u.appendChild(ledgerRow(g, V.nodeTotal, () => go(g.k, null))));
+    s.appendChild(u); p.appendChild(s);
+    p.appendChild(catSection(V.scope, V.nodeTotal, null));
+    return;
+  }
+  if (V.level === 'sa'){
+    head.innerHTML = `<h2>Bureaus in ${esc(D.sa[st.sa])}</h2><p class="sub">${money(V.nodeTotal)} · ${pct(V.nodeTotal, V.cityTotal)} of the City total</p>`;
+    p.appendChild(head);
+    const s = sec('Ranked by budget'), u = ul(); u.classList.add('scroll');
+    V.items.slice().sort((a,b) => b.v - a.v).forEach(d => u.appendChild(ledgerRow(d, V.nodeTotal, () => go(d.sa, d.k))));
+    s.appendChild(u); p.appendChild(s);
+    p.appendChild(catSection(V.scope, V.nodeTotal, D.sa.length ? st.sa : null));
+    return;
+  }
+  // bureau
+  const sel = st.sel && V.items.find(d => d.id === st.sel);
+  if (st.sel && !sel) st.sel = null;
+  head.innerHTML = `<h2>${esc(D.bu[st.bu])}</h2><p class="sub">${money(V.nodeTotal)} · ${pct(V.nodeTotal, V.cityTotal)} of the City total · ${V.items.length} ${st.by === 'program' ? 'program' : 'fund'}${V.items.length === 1 ? '' : 's'}</p>`;
+  p.appendChild(head);
+  const s = sec(st.by === 'program' ? 'Programs' : 'Funds'), u = ul(); u.classList.add('scroll');
+  V.items.slice().sort((a,b) => b.v - a.v).forEach(d => u.appendChild(ledgerRow(d, V.nodeTotal, () => { st.sel = st.sel === d.id ? null : d.id; render(); }, st.sel === d.id)));
+  s.appendChild(u); p.appendChild(s);
+
+  if (sel){
+    const rs = V.scope.filter(r => (st.by === 'program' ? r[1] : r[2]) === sel.k);
+    const box = document.createElement('section');
+    box.style.cssText = 'border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:14px';
+    box.innerHTML = `<div><h3>Selected ${st.by}</h3><h2 style="font-size:17px">${esc(sel.name)}</h2><p class="sub">${money(sel.v, true)} · ${pct(sel.v, V.nodeTotal)} of bureau</p></div>`;
+    const cross = st.by === 'program' ? sumBy(rs, r => r[2]) : sumBy(rs, r => r[1]);
+    const cs = sec(st.by === 'program' ? 'Funded by' : 'Programs in this fund'), cu = ul();
+    [...cross].filter(([,v]) => Math.round(v) !== 0).sort((a,b) => b[1]-a[1]).forEach(([k,v]) =>
+      cu.appendChild(ledgerRow({name: st.by==='program' ? fundName(k) : D.pg[k], tag: st.by==='program' ? 'Fund ' + fundNum(k) : '', v, sa:sel.sa}, sel.v)));
+    cs.appendChild(cu); box.appendChild(cs);
+    box.appendChild(catSection(rs, sel.v, sel.sa));
+    const clr = document.createElement('button'); clr.className = 'btn'; clr.textContent = 'Clear selection';
+    clr.style.alignSelf = 'flex-start';
+    clr.onclick = () => { st.sel = null; render(); };
+    box.appendChild(clr);
+    p.appendChild(box);
+  } else {
+    p.appendChild(catSection(V.scope, V.nodeTotal, D.buSA[st.bu]));
+  }
+}
+
+function catSection(rs, base, sa){
+  const m = sumBy(rs, r => r[3]);
+  const s = document.createElement('section'); s.className = 'cats';
+  s.innerHTML = '<h3>By spending category</h3>';
+  const u = document.createElement('ul'); u.className = 'ledger';
+  D.mo.forEach((mo, i) => {
+    const v = m.get(i); if (!v || Math.round(v) === 0) return;
+    u.appendChild(ledgerRow({name: mo[1], v, sa: sa === null ? 'x' : sa}, base));
+  });
+  if (sa === null) u.querySelectorAll('.row').forEach(r => r.style.setProperty('--c', 'var(--ink-2)'));
+  s.appendChild(u); return s;
+}
+
+/* ---------- tooltip ---------- */
+function showTip(ev, d, V, kind){
+  if (ev.pointerType === 'touch') return;
+  const base = kind === 'sa' ? V.cityTotal : V.nodeTotal;
+  let rs;
+  if (kind === 'sa') rs = V.all.filter(r => D.buSA[r[0]] === d.k);
+  else if (kind === 'bu') rs = V.all.filter(r => r[0] === d.k);
+  else rs = V.scope.filter(r => (st.by === 'program' ? r[1] : r[2]) === d.k);
+  const v = total(rs);
+  const cats = [...sumBy(rs, r => r[3])].filter(([,x]) => Math.round(x) !== 0).sort((a,b) => b[1]-a[1]).slice(0,4);
+  const rel = kind === 'sa' ? 'of City' : V.level === 'city' ? 'of City' : V.level === 'sa' ? 'of service area' : 'of bureau';
+  tip.innerHTML = `<div class="t">${esc(d.name)}</div>` + (d.tag ? `<div class="m">${esc(d.tag)}</div>` : '') +
+    `<div class="big">${money(v, true)}</div><div class="m">${pct(v, base)} ${rel}` + (V.level !== 'city' && kind !== 'sa' ? ` · ${pct(v, V.cityTotal)} of City` : '') + `</div>` +
+    `<table>${cats.map(([k,x]) => `<tr><td>${esc(D.mo[k][1])}</td><td>${money(x)}</td></tr>`).join('')}</table>` +
+    `<div class="k">${kind === 'leaf' ? 'Select for funding detail' : kind === 'sa' ? 'Select to open service area' : 'Select to open bureau'}</div>`;
+  tip.hidden = false;
+  const pad = 14, r = tip.getBoundingClientRect();
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - pad;
+  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+}
+function hideTip(){ tip.hidden = true; }
+
+/* ---------- navigation ---------- */
+function go(sa, bu){ st.sa = sa; st.bu = bu; st.sel = null; hideTip(); render(); }
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+document.querySelectorAll('input[name="fund"]').forEach(i => i.addEventListener('change', () => { st.fund = i.value; render(); }));
+document.querySelectorAll('input[name="measure"]').forEach(i => i.addEventListener('change', () => { st.measure = i.value; render(); }));
+document.querySelectorAll('input[name="by"]').forEach(i => i.addEventListener('change', () => { st.by = i.value; st.sel = null; render(); }));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ if (st.sel){ st.sel = null; render(); } else if (st.bu !== null) go(st.sa, null); else if (st.sa !== null) go(null, null); }
+});
+let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(render, 80); }).observe(tm);
+render();
+</script>
