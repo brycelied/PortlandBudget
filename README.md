@@ -6,7 +6,7 @@ An interactive treemap of the City of Portland's FY 2026-27 Adopted Budget.
 
 ## What it shows
 
-- **Levels:** City (bureaus grouped by service area) → service area → bureau. At the bureau level, switch between a breakdown by program or by fund, and select a tile to see its funding sources and spending categories.
+- **Levels:** City (bureaus grouped by service area) → service area → bureau. At the bureau level, switch between a breakdown by program or by fund. Select a program to break it down by sub-program, and select any sub-program or fund to see its funding sources and spending categories.
 - **Funds:** All funds, or the General Fund (Fund 100) only.
 - **Budget measure:**
   - **Total budget** ($8.55B): the legal budget under Oregon Local Budget Law, including fund-level requirements such as contingency, debt service, transfers, reserves and ending fund balance.
