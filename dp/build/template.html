@@ -145,26 +145,54 @@ td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 tr.dp{cursor:pointer}
 tr.dp:hover td{background:color-mix(in oklab, var(--ink) 4%, transparent)}
 tr.dp.open td{background:var(--surface-2);border-bottom-color:transparent}
-td.nm{min-width:220px}
+table.main{table-layout:fixed}
+th.c-x{width:30px}th.c-b{width:17%}th.c-r{width:15%}th.c-t{width:17%}th.c-f{width:64px}th.c-a{width:112px}
+@media (max-width:700px){th.c-a{width:96px}}
+td{overflow-wrap:anywhere}
+table.bal{table-layout:auto}
+table.bal th:first-child,table.bal td:first-child{position:sticky;left:0;z-index:1;background:var(--surface)!important}
+table.bal tr.grp td:first-child{position:static}
+@media (max-width:700px){table.bal th:first-child{min-width:150px}table.bal td:first-child{box-shadow:1px 0 0 var(--line)}}
+table.bal td{overflow-wrap:normal}
 @media (max-width:700px){td.nm{min-width:0}}
 td.nm .t{font-weight:600;color:var(--ink);line-height:1.3}
 td.nm .id{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 td.num{font-family:var(--font-label);font-weight:600;font-size:15.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
 .pos{color:#8cbcf2}.neg{color:#f0936b}
-.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px}
 .tag .dot{width:8px;height:8px;border-radius:50%}
 .tag small{color:var(--muted);font-size:11.5px}
 .exp{all:unset;cursor:pointer;color:var(--muted);font-size:13px;width:18px;display:inline-block;text-align:center}
 .exp:focus-visible{outline:2px solid var(--focus)}
-tr.detail td{background:var(--surface-2);padding:4px 16px 18px}
-.dgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px 28px}
+tr.detail > td{background:var(--surface-2);padding:6px 16px 20px}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:4px 28px;margin-bottom:6px}
 @media (max-width:760px){.dgrid{grid-template-columns:minmax(0,1fr)}}
-.dgrid h4{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
-.dgrid p{margin:0;color:var(--ink-2);font-size:14px;max-width:75ch}
+.detail h4{margin-top:14px!important;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.detail p{margin:0;color:var(--ink-2);font-size:14px;max-width:75ch}
+.bal-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);max-width:100%}
+table.bal{font-size:13.5px;min-width:100%;width:auto}
+table.bal th{background:var(--surface);color:var(--ink-2);text-transform:none;letter-spacing:0;font-size:12.5px;white-space:normal;vertical-align:bottom;min-width:110px;padding:8px 10px}
+table.bal th:first-child{min-width:200px}
+table.bal td{padding:6px 10px;border-bottom:1px solid var(--line);background:transparent!important;color:var(--ink-2)}
+table.bal td.num{font-size:14.5px;color:var(--ink)}
+table.bal td.num.neg{color:#f0936b}
+table.bal td.zero{color:var(--muted)}
+table.bal td.ind{padding-left:22px}
+table.bal tr.grp td{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:12px;border-bottom:0}
+table.bal tr.sub td{font-weight:700;color:var(--ink);border-top:1px solid var(--line-strong)}
+table.bal tr.net td{font-weight:700;color:var(--ink);border-top:2px solid var(--line-strong);border-bottom:0;background:color-mix(in oklab, var(--ink) 4%, transparent)!important}
+table.bal td.ok{color:#5fd0a3!important;font-family:var(--font-ui);font-size:13px}
+table.bal td.ok::before{content:"✓ "}
+table.bal td.off{color:#f0c060!important}
+table.bal td.off::before{content:"⚠ "}
+table.bal.pos td{vertical-align:top}
+table.bal .mono{font-variant-numeric:tabular-nums;font-size:12.5px;white-space:nowrap}
+table.bal .pj{font-size:12px;color:var(--muted);margin-top:2px}
+.note{font-size:12.5px;color:var(--muted);margin:6px 0 0;max-width:110ch}
 .mini{width:100%;font-size:13px}
 .mini td{border:0;padding:3px 0;color:var(--ink-2)}
 .mini td.num{font-size:14px}
-.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink-2);margin-top:6px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink-2);margin:6px 0 4px}
 .meta b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-right:4px}
 @media (max-width:700px){.hide-sm{display:none}}
 .empty{padding:28px 8px;text-align:center;color:var(--ink-2)}
@@ -212,18 +240,8 @@ footer p{margin:0;max-width:110ch}
       <div class="seg" role="group" aria-labelledby="lFund" id="segFund">
         <button type="button" data-v="all" aria-pressed="true">All funds</button>
         <button type="button" data-v="gf" aria-pressed="false">General Fund</button>
+        <button type="button" data-v="ngf" aria-pressed="false">Non-General Fund</button>
       </div>
-    </div>
-    <div class="ctl">
-      <span class="ctl-label" id="lMeas">Measure</span>
-      <div class="seg" role="group" aria-labelledby="lMeas" id="segMeas">
-        <button type="button" data-v="p" aria-pressed="true" title="Expense changes excluding contingency, reserves, debt service reserves and ending fund balance">Program spending</button>
-        <button type="button" data-v="e" aria-pressed="false" title="All expense requirement changes, including contingency and reserves">Total requirements</button>
-      </div>
-    </div>
-    <div class="ctl">
-      <label class="ctl-label" for="selRt">Request type</label>
-      <select id="selRt"><option value="all">All request types</option></select>
     </div>
     <div class="ctl grow">
       <label class="ctl-label" for="q">Search packages</label>
@@ -264,15 +282,15 @@ footer p{margin:0;max-width:110ch}
       <div><h2 id="tbTitle">Decision packages</h2><p class="sub" id="tbSub">Select a row for the package description, service impacts and line-item detail.</p></div>
     </div>
     <div class="tbl-wrap">
-      <table>
+      <table class="main">
         <thead><tr>
-          <th style="width:22px"><span class="sr" hidden>Expand</span></th>
+          <th class="c-x"><span class="sr" hidden>Expand</span></th>
           <th><button type="button" data-k="name">Decision package</button></th>
-          <th class="hide-sm"><button type="button" data-k="bur">Bureau</button></th>
-          <th class="hide-sm"><button type="button" data-k="rt">Request type</button></th>
-          <th class="hide-sm"><button type="button" data-k="tp">Type <span class="pill mk">Mock</span></button></th>
-          <th class="num hide-sm"><button type="button" data-k="fte">FTE</button></th>
-          <th class="num"><button type="button" data-k="amt" id="thAmt">Net change</button></th>
+          <th class="hide-sm c-b"><button type="button" data-k="bur">Bureau</button></th>
+          <th class="hide-sm c-r"><button type="button" data-k="rt">Request type</button></th>
+          <th class="hide-sm c-t"><button type="button" data-k="tp">Type <span class="pill mk">Mock</span></button></th>
+          <th class="num hide-sm c-f"><button type="button" data-k="fte">FTE</button></th>
+          <th class="num c-a"><button type="button" data-k="amt" id="thAmt">Requirements</button></th>
         </tr></thead>
         <tbody id="tb"></tbody>
       </table>
@@ -282,7 +300,7 @@ footer p{margin:0;max-width:110ch}
 
   <footer>
     <p><b>Source:</b> City of Portland BFM, Fall TAO – D7 – DP Data Export (financial and personnel exports), FY 2026-27 Fall Supplemental requested amounts, __LINES__ line items across __NDP__ decision packages. Service areas and bureau names follow the FY 2026-27 Adopted Budget (Ad Hoc Reporting Tool).</p>
-    <p><b>Measures:</b> <i>Program spending</i> is the net change in expense requirements excluding contingency, reserved for future expenditure, debt service reserves and ending fund balance. <i>Total requirements</i> includes them; it sums to __TOTEXP__ citywide. <i>General Fund</i> limits amounts and FTE to Fund 100 line items. FTE is the net change in budgeted positions from the personnel export.</p>
+    <p><b>Amounts:</b> net change in requirements, including contingency and reserves; citywide it sums to __TOTEXP__. The financial export leaves out personnel costs generated by positions, so the __POSCOST__ in position costs from the personnel export is added to Personnel; with it, every package's resources equal its requirements. <i>General Fund</i> and <i>Non-General Fund</i> limit amounts and FTE to Fund 100 line items or all other funds. FTE is the net change in budgeted positions from the personnel export.</p>
     <p><b>Mock data:</b> the service impact flag and the type tags (Enhance, Reduce, Create, Eliminate, Realign; CSL add, Revenue replacement, New revenue, Contingency or reserve change, Realignment, Balancing) are not in the current export and were assigned for illustration only.</p>
   </footer>
 </div>
@@ -296,7 +314,7 @@ const SA_ORDER = ['Public Works','Public Safety','Community & Economic Developme
 const B = DATA.bureaus;
 const DPS = DATA.dps.map(d => ({...d, sa: B[d.b].sa, bn: B[d.b].n}));
 
-const st = {sa:null, b:null, si:'all', fund:'all', meas:'p', rt:'all', q:'', types:new Set(), sort:{k:'amt',dir:-1}, open:new Set(), dvAll:false, tbAll:false};
+const st = {sa:null, b:null, si:'all', fund:'all', q:'', types:new Set(), sort:{k:'amt',dir:-1}, open:new Set(), dvAll:false, tbAll:false};
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -309,8 +327,9 @@ function money(v, signed=true){
 }
 const full = v => (v < 0 ? '−$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US');
 const fteFmt = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toLocaleString('en-US',{maximumFractionDigits:2}); };
-const amt = d => st.fund === 'gf' ? (st.meas === 'p' ? d.gp : d.ge) : (st.meas === 'p' ? d.p : d.e);
-const fte = d => st.fund === 'gf' ? d.gfte : d.fte;
+const amt = d => st.fund === 'gf' ? d.ge : st.fund === 'ngf' ? d.e - d.ge : d.e;
+const fte = d => st.fund === 'gf' ? d.gfte : st.fund === 'ngf' ? Math.round((d.fte - d.gfte)*100)/100 : d.fte;
+const FUND_NAME = {all:'all funds', gf:'General Fund', ngf:'non-General Fund'};
 const tcolor = t => SI_TYPES.includes(t) ? 'var(--si)' : 'var(--nosi)';
 
 // filters: skip lets a view ignore one dimension (e.g. the type list ignores the type filter)
@@ -318,11 +337,11 @@ function filtered(skip = {}){
   const q = st.q.trim().toLowerCase();
   return DPS.filter(d => {
     if (st.fund === 'gf' && !d.gf) return false;
+    if (st.fund === 'ngf' && !d.ngf) return false;
     if (!skip.scope){ if (st.sa && d.sa !== st.sa) return false; if (st.b && d.b !== st.b) return false; }
     if (st.si === 'y' && !d.si) return false;
     if (st.si === 'n' && d.si) return false;
     if (!skip.types && st.types.size && !st.types.has(d.tp)) return false;
-    if (st.rt !== 'all' && d.rt !== st.rt) return false;
     if (q && !(String(d.id).includes(q) || d.name.toLowerCase().includes(q) || d.bn.toLowerCase().includes(q) || d.d.toLowerCase().includes(q) || d.sit.toLowerCase().includes(q))) return false;
     return true;
   });
@@ -341,9 +360,7 @@ function bindSeg(id, key){
     render();
   });
 }
-bindSeg('#segSi','si'); bindSeg('#segFund','fund'); bindSeg('#segMeas','meas');
-[...new Set(DPS.map(d => d.rt))].sort().forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; $('#selRt').appendChild(o); });
-$('#selRt').addEventListener('change', e => { st.rt = e.target.value; render(); });
+bindSeg('#segSi','si'); bindSeg('#segFund','fund');
 let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { st.q = e.target.value; st.tbAll = false; render(); }, 120); });
 
 function buildChips(){
@@ -373,13 +390,12 @@ document.addEventListener('scroll', hideTip, {passive:true});
 /* ---------- render ---------- */
 function render(){
   const rows = filtered();
-  const measName = st.meas === 'p' ? 'program spending' : 'total requirements';
-  const fundName = st.fund === 'gf' ? 'General Fund' : 'all funds';
+  const fundName = FUND_NAME[st.fund];
   const net = rows.reduce((s,d) => s + amt(d), 0);
 
   // headline
   $('#hNum').textContent = money(net);
-  $('#hCap').textContent = `net change in ${measName} · ${fundName} · ${rows.length} decision package${rows.length === 1 ? '' : 's'}`;
+  $('#hCap').textContent = `net change in requirements · ${fundName} · ${rows.length} decision package${rows.length === 1 ? '' : 's'}`;
 
   // chips
   document.querySelectorAll('.chip').forEach(c => {
@@ -394,7 +410,6 @@ function render(){
   renderDiverging();
   renderTypes();
   renderTable(rows);
-  $('#thAmt').textContent = st.meas === 'p' ? 'Net change' : 'Requirements';
 }
 
 function renderCrumbs(){
@@ -423,7 +438,7 @@ function renderKpis(rows){
     <div class="kpi"><div class="k">Decision packages</div><div class="v">${rows.length}</div><div class="s">${new Set(rows.map(d=>d.b)).size} bureaus</div></div>
     <div class="kpi"><div class="k">Increases</div><div class="v pos" title="${full(inc)}">${money(inc)}</div><div class="s">${nInc} package${nInc===1?'':'s'}</div></div>
     <div class="kpi"><div class="k">Decreases</div><div class="v neg" title="${full(dec)}">${money(dec)}</div><div class="s">${nDec} package${nDec===1?'':'s'}</div></div>
-    <div class="kpi"><div class="k">Net FTE change</div><div class="v">${fteFmt(f)}</div><div class="s">${st.fund === 'gf' ? 'General Fund positions' : 'positions, all funds'}</div></div>
+    <div class="kpi"><div class="k">Net FTE change</div><div class="v">${fteFmt(f)}</div><div class="s">positions, ${FUND_NAME[st.fund]}</div></div>
     <div class="kpi"><div class="k">With service impact <span class="pill mk">Mock</span></div><div class="v">${pct}%</div>
       <div class="split" role="img" aria-label="${nSi} with service impact, ${nNo} without">${rows.length ? `<span class="a" style="flex:${nSi}"></span><span class="b" style="flex:${nNo}"></span>` : ''}</div>
       <div class="s">${nSi} impact · ${nNo} no impact · ${money(siAmt)} net</div></div>`;
@@ -462,7 +477,7 @@ function renderDiverging(){
       <span class="vl">${money(g.v)}</span>`;
     b.setAttribute('aria-label', `${g.lbl || g.k}: ${money(g.v)} net, ${g.n} packages`);
     b.addEventListener('click', () => { hideTip(); onPick(g); st.dvAll = false; st.tbAll = false; render(); });
-    b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(g.lbl || g.k)}</div><div class="big">${full(g.v)}</div><div class="s">${g.dp ? `${esc(g.dp.rt)} · ${fteFmt(fte(g.dp))} FTE` : `${g.n} decision package${g.n===1?'':'s'}`}</div>`));
+    b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(g.lbl || g.k)}</div><div class="big">${full(g.v)}</div><div class="s">${g.dp ? `${esc(g.dp.tp)} · ${fteFmt(fte(g.dp))} FTE` : `${g.n} decision package${g.n===1?'':'s'}`}</div>`));
     b.addEventListener('mouseleave', hideTip);
     box.appendChild(b);
   });
@@ -488,7 +503,7 @@ function renderTypes(){
       b.innerHTML = `<span class="lb">${esc(t)}</span><span class="tr"><span class="bar" style="display:block;width:${a.n/mxN*100}%;background:${color}"></span></span><span class="ct">${a.n}</span><span class="vl">${a.n ? money(a.v) : '—'}</span>`;
       b.setAttribute('aria-label', `${t}: ${a.n} packages, ${money(a.v)} net`);
       b.addEventListener('click', () => { hideTip(); toggleType(t); });
-      b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(t)}</div><div class="big">${full(a.v)}</div><div class="s">${a.n} decision package${a.n===1?'':'s'} · net ${st.meas === 'p' ? 'program spending' : 'requirements'}</div>`));
+      b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(t)}</div><div class="big">${full(a.v)}</div><div class="s">${a.n} decision package${a.n===1?'':'s'} · net requirements</div>`));
       b.addEventListener('mouseleave', hideTip);
       sec.appendChild(b);
     });
@@ -499,12 +514,66 @@ function renderTypes(){
   tl.appendChild(block('No service impact', NO_TYPES, 'var(--nosi)'));
 }
 
-function breakdown(title, obj){
-  const e = Object.entries(obj || {}).filter(([,v]) => v).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
-  if (!e.length) return '';
-  return `<h4>${title}</h4><table class="mini">${e.slice(0,8).map(([k,v]) => `<tr><td>${esc(k)}</td><td class="num ${v<0?'neg':''}">${full(v)}</td></tr>`).join('')}${e.length > 8 ? `<tr><td colspan="2">+ ${e.length-8} more</td></tr>` : ''}</table>`;
+const MO_ORDER = {0:['Beginning Fund Balance','Taxes','Licenses & Permits','Charges for Services','Intergovernmental','Bond & Note Proceeds','Miscellaneous','General Fund Discretionary','General Fund Overhead','Fund Transfers - Revenue','Interagency Revenue','Miscellaneous Fund Allocation'],
+  1:['Personnel','External Materials and Services','Internal Materials and Services','Capital Outlay','Debt Service','Fund Transfers - Expense','Contingency','Reserved for Future Expenditure','Debt Service Reserves','Ending Fund Balance']};
+const isGF = f => /\(100000\)$/.test(f);
+const cell = v => v ? `<td class="num ${v<0?'neg':''}">${full(v)}</td>` : `<td class="num zero">—</td>`;
+const tcell = v => `<td class="num ${v<0?'neg':''}">${full(v)}</td>`;
+
+// Resources vs requirements by fund, so the reader can see each fund balance
+function balanceTable(d){
+  const vol = {};
+  d.ln.forEach(([a,mo,f,v]) => { vol[f] = (vol[f]||0) + Math.abs(v); });
+  let funds = Object.keys(vol).sort((x,y) => (isGF(y)-isGF(x)) || vol[y]-vol[x]);
+  const MAXF = 3, other = funds.length > MAXF + 1 ? funds.slice(MAXF) : [];
+  if (other.length) funds = funds.slice(0, MAXF);
+  const col = f => other.includes(f) ? '__other' : f;
+  const cols = [...funds, ...(other.length ? ['__other'] : [])];
+  const showTotal = cols.length > 1;
+  const sum = {}; // sum[a][mo][col]
+  d.ln.forEach(([a,mo,f,v]) => { ((sum[a] ??= {})[mo] ??= {}); sum[a][mo][col(f)] = (sum[a][mo][col(f)]||0) + v; });
+  const tot = a => { const t = {}; Object.values(sum[a]||{}).forEach(r => Object.entries(r).forEach(([c,v]) => t[c] = (t[c]||0)+v)); return t; };
+  const rowTotal = r => cols.reduce((s,c) => s + (r[c]||0), 0);
+  const body = a => {
+    const mos = Object.keys(sum[a]||{}).sort((x,y) => MO_ORDER[a].indexOf(x) - MO_ORDER[a].indexOf(y));
+    if (!mos.length) return `<tr><td class="ind">None</td>${cols.map(()=>'<td class="num zero">—</td>').join('')}${showTotal?'<td class="num zero">—</td>':''}</tr>`;
+    return mos.map(mo => `<tr><td class="ind">${esc(mo)}</td>${cols.map(c => cell(sum[a][mo][c]||0)).join('')}${showTotal ? cell(rowTotal(sum[a][mo])) : ''}</tr>`).join('');
+  };
+  const tr = tot(0), te = tot(1);
+  const diff = {}; cols.forEach(c => diff[c] = (tr[c]||0) - (te[c]||0));
+  const diffCell = v => Math.abs(v) < 1 ? `<td class="num ok">Balanced</td>` : `<td class="num off">${full(v)}</td>`;
+  const tdiff = rowTotal(tr) - rowTotal(te);
+  const head = cols.map(c => `<th class="num">${c === '__other' ? `Other funds (${other.length})` : esc(c)}</th>`).join('');
+  return `<div class="bal-wrap"><table class="bal">
+    <thead><tr><th></th>${head}${showTotal ? '<th class="num">Total</th>' : ''}</tr></thead>
+    <tbody>
+      <tr class="grp"><td colspan="${cols.length + 1 + showTotal}">Resources</td></tr>${body(0)}
+      <tr class="sub"><td>Total resources</td>${cols.map(c => tcell(tr[c]||0)).join('')}${showTotal ? tcell(rowTotal(tr)) : ''}</tr>
+      <tr class="grp"><td colspan="${cols.length + 1 + showTotal}">Requirements</td></tr>${body(1)}
+      <tr class="sub"><td>Total requirements</td>${cols.map(c => tcell(te[c]||0)).join('')}${showTotal ? tcell(rowTotal(te)) : ''}</tr>
+      <tr class="net"><td>Resources less requirements</td>${cols.map(c => diffCell(diff[c])).join('')}${showTotal ? diffCell(tdiff) : ''}</tr>
+    </tbody></table></div>
+    ${other.length ? `<p class="note">Other funds: ${other.map(esc).join('; ')}.</p>` : ''}`;
 }
 
+function positionsTable(d){
+  if (!d.pos.length) return '';
+  const multiFund = new Set(d.pos.map(p => p[2])).size > 1;
+  const t = d.pos.reduce((a,p) => { a.f += p[4]; a.s += p[5]; a.b += p[6]; a.t += p[7]; return a; }, {f:0,s:0,b:0,t:0});
+  const notes = d.pos.some(p => p[8]);
+  return `<h4>Positions (${d.pos.length})</h4>
+    <div class="bal-wrap"><table class="bal pos">
+      <thead><tr><th>Position</th><th>PCN</th><th>Fund center</th>${multiFund ? '<th>Fund</th>' : ''}<th class="num">FTE</th><th class="num">Salary</th><th class="num">Benefits &amp; taxes</th><th class="num">Total</th></tr></thead>
+      <tbody>${d.pos.map(p => `<tr><td>${esc(p[1])}${p[8] ? `<div class="pj">${esc(p[8])}</div>` : ''}</td><td class="mono">${esc(p[0])}</td><td>${esc(p[3])}</td>${multiFund ? `<td>${esc(p[2])}</td>` : ''}
+        <td class="num ${p[4]<0?'neg':''}">${fteFmt(p[4])}</td>${cell(p[5])}${cell(p[6])}${cell(p[7])}</tr>`).join('')}
+        <tr class="sub"><td colspan="${multiFund ? 4 : 3}">Total positions</td><td class="num">${fteFmt(t.f)}</td>${cell(t.s)}${cell(t.b)}${cell(t.t)}</tr>
+      </tbody></table></div>
+    ${!multiFund ? `<p class="note">Fund: ${esc(d.pos[0][2])}.` : '<p class="note">'} Position costs come from the personnel export and are included in Personnel requirements above${d.pf ? `, along with ${full(d.pf)} of personnel budget entered directly on the package` : ''}.</p>`;
+}
+
+const SM = matchMedia('(max-width:700px)');
+const ncols = () => SM.matches ? 3 : 7;
+SM.addEventListener('change', () => renderTable(filtered()));
 function renderTable(rows){
   const k = st.sort.k, dir = st.sort.dir;
   const key = {name:d=>d.name.toLowerCase(), bur:d=>d.bn, rt:d=>d.rt, tp:d=>(d.si?'0':'1')+d.tp, fte:d=>fte(d), amt:d=>amt(d)}[k];
@@ -515,31 +584,29 @@ function renderTable(rows){
     b.dataset.arrow = on ? (dir > 0 ? ' ↑' : ' ↓') : '';
   });
   const tb = $('#tb');
-  if (!rows.length){ tb.innerHTML = `<tr><td colspan="7" class="empty">No decision packages match these filters.</td></tr>`; }
+  if (!rows.length){ tb.innerHTML = `<tr><td colspan="${ncols()}" class="empty">No decision packages match these filters.</td></tr>`; }
   else tb.innerHTML = shown.map(d => {
     const v = amt(d), open = st.open.has(d.id);
     const main = `<tr class="dp${open?' open':''}" id="dp-${d.id}" data-id="${d.id}">
       <td><button type="button" class="exp" aria-expanded="${open}" aria-label="Details for DP ${d.id}">${open ? '▾' : '▸'}</button></td>
-      <td class="nm"><div class="t">${esc(d.name)}</div><div class="id">DP ${d.id}<span class="show-sm"> · ${esc(d.b)}</span></div><div class="show-sm tag" style="margin-top:3px"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</div></td>
+      <td class="nm"><div class="t">${esc(d.name)}</div><div class="id">DP ${d.id}<span class="show-sm"> · ${esc(d.b)}</span>${d.pos.length ? ` · ${d.pos.length} position${d.pos.length===1?'':'s'}` : ''}</div><div class="show-sm tag" style="margin-top:3px"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</div></td>
       <td class="hide-sm">${esc(d.bn)}</td>
       <td class="hide-sm">${esc(d.rt)}</td>
       <td class="hide-sm"><span class="tag"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</span><br><span class="tag"><small>${d.si ? 'Service impact' : 'No service impact'}</small></span></td>
       <td class="num hide-sm">${fte(d) ? fteFmt(fte(d)) : '—'}</td>
       <td class="num ${v>0?'pos':v<0?'neg':''}" title="${full(v)}">${money(v)}</td></tr>`;
     if (!open) return main;
-    return main + `<tr class="detail"><td colspan="7"><div class="dgrid">
-      <div>
-        <div class="meta"><span><b>Bureau</b>${esc(d.bn)}</span><span><b>Service area</b>${esc(d.sa)}</span><span><b>Request type</b>${esc(d.rt)}</span><span><b>Tag</b>${d.si ? 'Service impact' : 'No service impact'} · ${esc(d.tp)} <span class="pill mk">Mock</span></span></div>
-        <h4>Package description</h4><p>${esc(d.d || 'No description provided.')}</p>
-        <h4>Service impacts</h4><p>${esc(d.sit || 'None provided.')}</p>
-        ${d.eq ? `<h4>Equity outcomes and impact tracking</h4><p>${esc(d.eq)}</p>` : ''}
+    return main + `<tr class="detail"><td colspan="${ncols()}">
+      <div class="meta"><span><b>Bureau</b>${esc(d.bn)}</span><span><b>Service area</b>${esc(d.sa)}</span><span><b>Request type</b>${esc(d.rt)}</span><span><b>Package type</b>${d.si ? 'Service impact' : 'No service impact'} · ${esc(d.tp)} <span class="pill mk">Mock</span></span><span><b>FTE</b>${fteFmt(d.fte)}</span></div>
+      <div class="dgrid">
+        <div><h4>Package description</h4><p>${esc(d.d || 'No description provided.')}</p></div>
+        <div><h4>Service impacts</h4><p>${esc(d.sit || 'None provided.')}</p>
+        ${d.eq ? `<h4>Equity outcomes and impact tracking</h4><p>${esc(d.eq)}</p>` : ''}</div>
       </div>
-      <div>
-        <div class="meta"><span><b>Program spending</b>${full(st.fund==='gf'?d.gp:d.p)}</span><span><b>Total requirements</b>${full(st.fund==='gf'?d.ge:d.e)}</span>${d.gfd ? `<span><b>GF discretionary</b>${full(d.gfd)}</span>` : ''}<span><b>FTE</b>${fteFmt(fte(d))}</span></div>
-        ${breakdown('Expenses by major object (all funds)', d.obj)}
-        ${breakdown('Expenses by fund', d.fund)}
-        ${breakdown('Resources by major object', d.rev)}
-      </div></div></td></tr>`;
+      <h4>Resources and requirements by fund</h4>
+      ${balanceTable(d)}
+      ${positionsTable(d)}
+    </td></tr>`;
   }).join('');
   tb.querySelectorAll('tr.dp').forEach(r => r.addEventListener('click', () => {
     const id = +r.dataset.id; st.open.has(id) ? st.open.delete(id) : st.open.add(id); renderTable(filtered());

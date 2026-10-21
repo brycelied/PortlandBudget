@@ -28,6 +28,11 @@ gfte = per[per['Fund - Name'].astype(str).str.startswith('100000')].groupby('For
 
 NO_SI = re.compile(r'^(none|n/?a|na|no\b|there (is|are|will be) no|this (request|package|dp|decision package) (has|will have) no|not applicable|-|no impact)', re.I)
 
+def fund_label(v):
+    v = txt(v)
+    m = re.match(r'^(\d+)\s*-\s*(.*)$', v)
+    return f"{m.group(2).strip()} ({m.group(1)})" if m else v
+
 def h(x):  # deterministic 0..1 from DP id
     return int(hashlib.md5(str(x).encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
 
@@ -42,7 +47,7 @@ for fid, g in fin.groupby('Form Header ID'):
     name = re.sub(r'^[\d,]+\s*[–-]\s*', '', txt(first['DP - Name']))
     rtype = first['Request Type Name']
     nfte = float(fte.get(fid, 0))
-    pnet = float(prog[AMT].sum())
+    pnet = float(prog[AMT].sum()) + float(per.loc[per['Form ID'] == fid, 'Total'].sum())  # incl. position costs
     lname = name.lower()
 
     # ---- MOCK service-impact flag + type (placeholder until bureaus tag DPs) ----
@@ -53,7 +58,13 @@ for fid, g in fin.groupby('Form Header ID'):
     if rtype in ('Recognizing New External Revenue', 'Technical Adjustments') and real_si and not has_si:
         has_si = h(fid) < .5
     if has_si:
-        if rtype == 'Realignment Implementation' or abs(pnet) < 1000:
+        if rtype == 'Realignment Implementation':
+            t = 'Realign'
+        elif nfte > 0 and pnet >= 0:
+            t = 'Create' if re.search(r'\bnew\b|pilot|launch|establish|creat|start', lname) or h(fid) < .5 else 'Enhance'
+        elif abs(pnet) < 1000:
+            t = 'Realign'
+        elif pnet < 0 and float(exp[AMT].sum()) + float(per.loc[per['Form ID'] == fid, 'Total'].sum()) >= 0:
             t = 'Realign'
         elif pnet < 0:
             t = 'Eliminate' if re.search(r'eliminat|discontinu|sunset|close|end of', lname) or h(fid) < .25 else 'Reduce'
@@ -84,23 +95,48 @@ for fid, g in fin.groupby('Form Header ID'):
             else:
                 t = 'Realignment'
 
-    objs_b = exp.groupby('Major Object Name')[AMT].sum()
-    funds_b = exp.groupby('Fund - Name')[AMT].sum()
-    rev_b = rev.groupby('Major Object Name')[AMT].sum()
+    ln = g.groupby(['Account Name', 'Major Object Name', 'Fund - Name'])[AMT].sum().reset_index()
+    lines = [[0 if r['Account Name'] == 'Revenue' else 1, r['Major Object Name'], fund_label(r['Fund - Name']), int(r[AMT])]
+             for _, r in ln.iterrows() if r[AMT]]
+    pg = per[per['Form ID'] == fid]
+    pos = []
+    if len(pg):
+        pa = pg.groupby(['PCN', 'Job Class - Name', 'Fund - Name', 'Home Fund Center -  Name'], dropna=False).agg(
+            fte=('FTE', 'sum'), sal=('Salary', 'sum'), ben=('Benefit', 'sum'), sta=('Statutory', 'sum'), tot=('Total', 'sum'),
+            j=('Justification', lambda x: txt(next((v for v in x if txt(v)), '')))).reset_index()
+        for _, r in pa.sort_values(['fte', 'tot'], ascending=False).iterrows():
+            pos.append([txt(r['PCN']), re.sub(r'^\d+\s*-\s*', '', txt(r['Job Class - Name'])), fund_label(r['Fund - Name']),
+                        re.sub(r'^\S+\s*-\s*', '', txt(r['Home Fund Center -  Name'])), round(float(r.fte), 2),
+                        int(r.sal), int(r.ben + r.sta), int(r.tot), r.j])
+    # The financial export leaves out position-generated personnel costs; they are only in the
+    # personnel export. Add them to Personnel requirements by fund so each package balances.
+    pos_by_fund = pg.groupby('Fund - Name')['Total'].sum() if len(pg) else pd.Series(dtype=float)
+    lk = {(l[0], l[1], l[2]): l for l in lines}
+    for f, v in pos_by_fund.items():
+        if not v: continue
+        key = (1, 'Personnel', fund_label(f))
+        if key in lk: lk[key][3] += int(v)
+        else:
+            lk[key] = [1, 'Personnel', fund_label(f), int(v)]; lines.append(lk[key])
+    lines = [l for l in lines if l[3]]
+    pos_gf = int(sum(v for f, v in pos_by_fund.items() if str(f).startswith('100000')))
+    gexp_v = int(gexp[AMT].sum()) + pos_gf; e_v = int(exp[AMT].sum()) + int(pos_by_fund.sum())
+    pers_fin = int(exp.loc[exp['Major Object Name'] == 'Personnel', AMT].sum())
     dps.append({
         'id': int(fid), 'name': name, 'b': first['bcode'],
         'rt': rtype, 'si': has_si, 'tp': t,
-        'e': int(exp[AMT].sum()), 'p': int(pnet),
-        'ge': int(gexp[AMT].sum()), 'gp': int(gprog[AMT].sum()),
-        'gfd': int(rev.loc[rev['Major Object Name'] == 'General Fund Discretionary', AMT].sum()),
+        'e': e_v, 'ge': gexp_v,
         'fte': round(nfte, 2), 'gfte': round(float(gfte.get(fid, 0)), 2),
-        'gf': bool(g.isgf.any()),
-        'obj': {k: int(v) for k, v in objs_b.items() if v},
-        'fund': {re.sub(r'^\d+\s*-\s*', '', k).strip(): int(v) for k, v in funds_b.items() if v},
-        'rev': {k: int(v) for k, v in rev_b.items() if v},
+        'gf': bool(g.isgf.any()), 'ngf': bool((~g.isgf).any()),
+        'ln': lines, 'pos': pos, 'pf': pers_fin,
         'd': txt(first['Package Desc']) or txt(first['Justification']),
         'sit': si, 'eq': txt(first['Equity Outcomes and Impact Tracking']),
     })
+
+# Mock only: make sure every type appears at least once in the demo
+red = sorted([d for d in dps if d['tp'] == 'Reduce'], key=lambda d: d['e'])
+if red and not any(d['tp'] == 'Eliminate' for d in dps):
+    red[0]['tp'] = 'Eliminate'
 
 bureaus = {}
 for code in fin['bcode'].unique():
@@ -108,7 +144,8 @@ for code in fin['bcode'].unique():
     bureaus[code] = {'n': r['Bureau Name'], 'sa': clean_sa(r['NEW Service Area - Name'])}
 
 totals = {
-    'expense': int(fin.loc[fin['Account Name'] == 'Expense', AMT].sum()),
+    'expense': int(fin.loc[fin['Account Name'] == 'Expense', AMT].sum()) + int(per['Total'].sum()),
+    'pos_cost': int(per['Total'].sum()),
     'revenue': int(fin.loc[fin['Account Name'] == 'Revenue', AMT].sum()),
     'lines': int(len(fin)), 'dps': len(dps), 'fte': round(float(per.FTE.sum()), 2),
 }
@@ -116,5 +153,5 @@ json.dump({'dps': dps, 'bureaus': bureaus, 'totals': totals}, open(out, 'w'), se
 
 d = pd.DataFrame(dps)
 print(totals)
-print(d.groupby(['si', 'tp']).agg(n=('id', 'size'), e=('e', 'sum'), p=('p', 'sum')))
-print('sum e', d.e.sum(), 'sum p', d.p.sum(), 'ge', d['ge'].sum(), 'gp', d['gp'].sum(), 'fte', d.fte.sum())
+print(d.groupby(['si', 'tp']).agg(n=('id', 'size'), e=('e', 'sum')))
+print('sum e', d.e.sum(), 'ge', d['ge'].sum(), 'fte', d.fte.sum(), 'positions', d.pos.map(len).sum(), 'dps w/ pos', (d.pos.map(len) > 0).sum())
