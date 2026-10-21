@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Portland Decision Packages</title>
+<meta name="description" content="Mockup dashboard of decision packages in the City of Portland FY 2026-27 Fall Supplemental Budget, by service area, bureau and service impact.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: civic ledger, same look as the budget treemap. Masthead with the headline net change, slicers, KPI strip, two charts side by side, then the decision package ledger. */
+:root{
+  --bg:#0f1114; --surface:#171a1f; --surface-2:#1d2127; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
+  --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
+  --up:#3987e5; --down:#d95926; --si:#9085e9; --nosi:#199e70; --warn:#c98500;
+  --font-ui:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-label:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+a{color:var(--focus)}
+button{font:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+header.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.eyebrow a{color:var(--ink-2);text-decoration:none;text-transform:none;letter-spacing:0;font-weight:500}
+.eyebrow a:hover{color:var(--ink);text-decoration:underline}
+h1{font-family:var(--font-label);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:4px 0 0;text-wrap:balance}
+.headline{text-align:right;min-width:0}
+.headline .num{font-family:var(--font-label);font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.headline .cap{font-size:13px;color:var(--ink-2);margin-top:4px}
+@media (max-width:640px){.headline{text-align:left}}
+
+.mock{display:flex;gap:10px;align-items:flex-start;border:1px dashed color-mix(in oklab, var(--warn) 70%, transparent);background:color-mix(in oklab, var(--warn) 9%, var(--bg));
+  border-radius:8px;padding:10px 14px;font-size:14px;color:var(--ink-2)}
+.mock b{color:var(--ink)}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;padding:1px 6px;line-height:1.5;white-space:nowrap}
+.pill.mk{border:1px solid var(--warn);color:#f0c060}
+
+.controls{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ctl-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line-strong);border-radius:8px;padding:2px;background:var(--surface);gap:2px}
+.seg button{all:unset;padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap;user-select:none}
+.seg button:hover{color:var(--ink);background:color-mix(in oklab, var(--ink) 6%, transparent)}
+.seg button[aria-pressed="true"]{background:var(--chip);color:var(--chip-ink)}
+.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:1px}
+select,input[type=search]{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;min-height:36px}
+input[type=search]{width:240px;max-width:100%}
+select{max-width:100%}
+.ctl.grow{flex:1 1 220px}
+.ctl.grow input{width:100%}
+
+.types{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-start}
+.tgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tgroup .gl{font-size:12px;font-weight:600;color:var(--ink-2);margin-right:2px;display:inline-flex;align-items:center}
+.chip{all:unset;cursor:pointer;font-size:13px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-2);white-space:nowrap}
+.chip:hover{color:var(--ink);border-color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--chip);color:var(--chip-ink);border-color:var(--chip)}
+.chip[disabled]{opacity:.35;cursor:not-allowed}
+.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.linkbtn{all:unset;cursor:pointer;font-size:13px;color:var(--focus);font-weight:500}
+.linkbtn:hover{text-decoration:underline}
+.linkbtn:focus-visible{outline:2px solid var(--focus)}
+
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:14px;min-height:28px}
+.crumbs button{all:unset;cursor:pointer;color:var(--ink-2);font-weight:500;padding:2px 4px;border-radius:4px}
+.crumbs button:hover{color:var(--ink);text-decoration:underline}
+.crumbs button:focus-visible{outline:2px solid var(--focus)}
+.crumbs .here{font-weight:700;color:var(--ink);padding:2px 4px}
+.crumbs .sep{color:var(--muted)}
+.crumbs .lvl{margin-left:auto;font-size:12px;color:var(--muted)}
+
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+@media (max-width:1000px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
+.kpi .k{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .v{font-family:var(--font-label);font-weight:700;font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi .s{font-size:12.5px;color:var(--ink-2)}
+.split{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0 6px;gap:2px;background:var(--surface)}
+.split span{display:block;height:100%}
+.split .a{background:var(--si)}
+.split .b{background:var(--nosi)}
+
+.grid2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:960px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
+.card h2{font-family:var(--font-label);font-size:20px;font-weight:700;margin:0;line-height:1.2;text-wrap:balance}
+.card .sub{font-size:13px;color:var(--muted);margin:2px 0 12px}
+.card-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:flex-start}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);align-items:center}
+
+/* diverging bars */
+.dv{display:flex;flex-direction:column}
+.dvrow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr) 78px;gap:10px;align-items:center;padding:4px 6px;border-radius:5px;cursor:pointer;min-height:32px}
+.dvrow.static{cursor:default}
+.dvrow:hover{background:color-mix(in oklab, var(--ink) 5%, transparent)}
+.dvrow:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.dvrow .lb{font-size:13.5px;line-height:1.25;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.dvrow .lb small{display:block;color:var(--muted);font-size:11.5px}
+.dvrow .tr{position:relative;height:18px}
+.dvrow .zero{position:absolute;top:-6px;bottom:-6px;width:1px;background:var(--line-strong)}
+.dvrow .bar{position:absolute;top:2px;height:14px;min-width:2px}
+.dvrow .bar.up{background:var(--up);border-radius:0 4px 4px 0}
+.dvrow .bar.dn{background:var(--down);border-radius:4px 0 0 4px}
+.dvrow .vl{text-align:right;font-family:var(--font-label);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
+@media (max-width:560px){.dvrow{grid-template-columns:minmax(0,1fr) 72px;gap:2px 8px}.dvrow .lb{grid-column:1 / -1;-webkit-line-clamp:3}.dvrow .lb small{display:inline;margin-left:6px}}
+.more{margin-top:8px}
+
+/* type list */
+.tl{display:flex;flex-direction:column;gap:14px}
+.tl h3{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:0 0 4px;display:flex;align-items:center;gap:6px}
+.trow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,175px) minmax(0,1fr) 34px 74px;gap:10px;align-items:center;padding:4px 6px;border-radius:5px;cursor:pointer;width:100%}
+.trow:hover{background:color-mix(in oklab, var(--ink) 5%, transparent)}
+.trow:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.trow[aria-pressed="true"]{background:color-mix(in oklab, var(--ink) 9%, transparent);box-shadow:inset 2px 0 0 var(--ink)}
+.trow.dim{opacity:.38}
+.trow .lb{font-size:13.5px}
+.trow .tr{height:12px;position:relative}
+.trow .bar{height:12px;border-radius:0 4px 4px 0;min-width:2px}
+.trow .ct{font-family:var(--font-label);font-weight:600;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
+.trow .vl{font-family:var(--font-label);font-weight:500;font-size:14px;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tlhead{display:grid;grid-template-columns:minmax(0,175px) minmax(0,1fr) 34px 74px;gap:10px;padding:0 6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.tlhead span:nth-child(3),.tlhead span:nth-child(4){text-align:right}
+@media (max-width:560px){.trow,.tlhead{grid-template-columns:minmax(0,1fr) 56px 28px 66px;gap:8px}}
+
+/* table */
+.tbl-wrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+th button{all:unset;cursor:pointer}
+th button:hover{color:var(--ink)}
+th button:focus-visible{outline:2px solid var(--focus)}
+th.num,td.num{text-align:right}
+td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+tr.dp{cursor:pointer}
+tr.dp:hover td{background:color-mix(in oklab, var(--ink) 4%, transparent)}
+tr.dp.open td{background:var(--surface-2);border-bottom-color:transparent}
+td.nm{min-width:220px}
+@media (max-width:700px){td.nm{min-width:0}}
+td.nm .t{font-weight:600;color:var(--ink);line-height:1.3}
+td.nm .id{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+td.num{font-family:var(--font-label);font-weight:600;font-size:15.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pos{color:#8cbcf2}.neg{color:#f0936b}
+.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.tag .dot{width:8px;height:8px;border-radius:50%}
+.tag small{color:var(--muted);font-size:11.5px}
+.exp{all:unset;cursor:pointer;color:var(--muted);font-size:13px;width:18px;display:inline-block;text-align:center}
+.exp:focus-visible{outline:2px solid var(--focus)}
+tr.detail td{background:var(--surface-2);padding:4px 16px 18px}
+.dgrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:18px 28px}
+@media (max-width:760px){.dgrid{grid-template-columns:minmax(0,1fr)}}
+.dgrid h4{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.dgrid p{margin:0;color:var(--ink-2);font-size:14px;max-width:75ch}
+.mini{width:100%;font-size:13px}
+.mini td{border:0;padding:3px 0;color:var(--ink-2)}
+.mini td.num{font-size:14px}
+.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink-2);margin-top:6px}
+.meta b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-right:4px}
+@media (max-width:700px){.hide-sm{display:none}}
+.empty{padding:28px 8px;text-align:center;color:var(--ink-2)}
+.tfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+
+footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px}
+footer p{margin:0;max-width:110ch}
+
+#tip{position:fixed;pointer-events:none;z-index:20;background:#0b0d10;border:1px solid var(--line-strong);border-radius:6px;padding:8px 10px;font-size:13px;max-width:280px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+#tip .t{font-weight:600}
+#tip .big{font-family:var(--font-label);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+#tip .s{color:var(--ink-2)}
+@media (forced-colors:active){.bar,.split span,.dot,.sw{forced-color-adjust:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow"><span>City of Portland · FY 2026-27 Fall Supplemental Budget</span><a href="../">← Budget treemap</a></p>
+      <h1>Decision Package Dashboard</h1>
+    </div>
+    <div class="headline">
+      <div class="num" id="hNum">—</div>
+      <div class="cap" id="hCap"></div>
+    </div>
+  </header>
+
+  <div class="mock" role="note">
+    <span class="pill mk">Mockup</span>
+    <span><b>Service impact flags and decision package types are placeholder values.</b> They were assigned for illustration from each package's request type, amount and service impact statement, and will be replaced with bureau-entered tags once they are collected. Dollar amounts, FTE and package text are real requested figures from the Fall TAO D7 data export.</span>
+  </div>
+
+  <section class="controls" aria-label="Filters">
+    <div class="ctl">
+      <span class="ctl-label" id="lSi">Service impact</span>
+      <div class="seg" role="group" aria-labelledby="lSi" id="segSi">
+        <button type="button" data-v="all" aria-pressed="true">All</button>
+        <button type="button" data-v="y" aria-pressed="false"><span class="sw" style="background:var(--si)"></span>Service impact</button>
+        <button type="button" data-v="n" aria-pressed="false"><span class="sw" style="background:var(--nosi)"></span>No service impact</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" id="lFund">Funds</span>
+      <div class="seg" role="group" aria-labelledby="lFund" id="segFund">
+        <button type="button" data-v="all" aria-pressed="true">All funds</button>
+        <button type="button" data-v="gf" aria-pressed="false">General Fund</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" id="lMeas">Measure</span>
+      <div class="seg" role="group" aria-labelledby="lMeas" id="segMeas">
+        <button type="button" data-v="p" aria-pressed="true" title="Expense changes excluding contingency, reserves, debt service reserves and ending fund balance">Program spending</button>
+        <button type="button" data-v="e" aria-pressed="false" title="All expense requirement changes, including contingency and reserves">Total requirements</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <label class="ctl-label" for="selRt">Request type</label>
+      <select id="selRt"><option value="all">All request types</option></select>
+    </div>
+    <div class="ctl grow">
+      <label class="ctl-label" for="q">Search packages</label>
+      <input type="search" id="q" placeholder="Name, number or text" autocomplete="off">
+    </div>
+  </section>
+
+  <section class="types" aria-label="Decision package type">
+    <div class="tgroup" id="tgSi"><span class="gl"><span class="sw" style="background:var(--si)"></span>Service impact</span></div>
+    <div class="tgroup" id="tgNo"><span class="gl"><span class="sw" style="background:var(--nosi)"></span>No service impact</span></div>
+    <button type="button" class="linkbtn" id="clearTypes" hidden>Clear types</button>
+    <span class="pill mk" title="Types are placeholder values in this mockup">Mock tags</span>
+  </section>
+
+  <nav class="crumbs" aria-label="Drill-down level" id="crumbs"></nav>
+
+  <section class="kpis" id="kpis" aria-label="Summary"></section>
+
+  <div class="grid2">
+    <section class="card" aria-labelledby="dvTitle">
+      <div class="card-head">
+        <div><h2 id="dvTitle">Net change by service area</h2><p class="sub" id="dvSub"></p></div>
+        <div class="legend"><span><span class="sw" style="background:var(--up)"></span>Increase</span><span><span class="sw" style="background:var(--down)"></span>Decrease</span></div>
+      </div>
+      <div class="dv" id="dv"></div>
+      <button type="button" class="linkbtn more" id="dvMore" hidden></button>
+    </section>
+    <section class="card" aria-labelledby="tlTitle">
+      <h2 id="tlTitle">By decision package type</h2>
+      <p class="sub">Number of packages and net change. Select a type to filter.</p>
+      <div class="tlhead" aria-hidden="true"><span>Type</span><span>Packages</span><span>#</span><span>Net</span></div>
+      <div class="tl" id="tl"></div>
+    </section>
+  </div>
+
+  <section class="card" aria-labelledby="tbTitle">
+    <div class="card-head">
+      <div><h2 id="tbTitle">Decision packages</h2><p class="sub" id="tbSub">Select a row for the package description, service impacts and line-item detail.</p></div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:22px"><span class="sr" hidden>Expand</span></th>
+          <th><button type="button" data-k="name">Decision package</button></th>
+          <th class="hide-sm"><button type="button" data-k="bur">Bureau</button></th>
+          <th class="hide-sm"><button type="button" data-k="rt">Request type</button></th>
+          <th class="hide-sm"><button type="button" data-k="tp">Type <span class="pill mk">Mock</span></button></th>
+          <th class="num hide-sm"><button type="button" data-k="fte">FTE</button></th>
+          <th class="num"><button type="button" data-k="amt" id="thAmt">Net change</button></th>
+        </tr></thead>
+        <tbody id="tb"></tbody>
+      </table>
+    </div>
+    <div class="tfoot"><span id="tbCount"></span><button type="button" class="linkbtn" id="tbMore" hidden></button></div>
+  </section>
+
+  <footer>
+    <p><b>Source:</b> City of Portland BFM, Fall TAO – D7 – DP Data Export (financial and personnel exports), FY 2026-27 Fall Supplemental requested amounts, __LINES__ line items across __NDP__ decision packages. Service areas and bureau names follow the FY 2026-27 Adopted Budget (Ad Hoc Reporting Tool).</p>
+    <p><b>Measures:</b> <i>Program spending</i> is the net change in expense requirements excluding contingency, reserved for future expenditure, debt service reserves and ending fund balance. <i>Total requirements</i> includes them; it sums to __TOTEXP__ citywide. <i>General Fund</i> limits amounts and FTE to Fund 100 line items. FTE is the net change in budgeted positions from the personnel export.</p>
+    <p><b>Mock data:</b> the service impact flag and the type tags (Enhance, Reduce, Create, Eliminate, Realign; CSL add, Revenue replacement, New revenue, Contingency or reserve change, Realignment, Balancing) are not in the current export and were assigned for illustration only.</p>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script>
+const DATA = __DATA__;
+const SI_TYPES = ['Enhance','Reduce','Create','Eliminate','Realign'];
+const NO_TYPES = ['CSL add','Revenue replacement','New revenue','Contingency or reserve change','Realignment','Balancing'];
+const SA_ORDER = ['Public Works','Public Safety','Community & Economic Development','City Operations','City Administrator','Office of the City Auditor','City Council','Office of the Mayor'];
+const B = DATA.bureaus;
+const DPS = DATA.dps.map(d => ({...d, sa: B[d.b].sa, bn: B[d.b].n}));
+
+const st = {sa:null, b:null, si:'all', fund:'all', meas:'p', rt:'all', q:'', types:new Set(), sort:{k:'amt',dir:-1}, open:new Set(), dvAll:false, tbAll:false};
+
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function money(v, signed=true){
+  const a = Math.abs(v), s = v < 0 ? '−' : (signed && v > 0 ? '+' : '');
+  if (a >= 1e9) return s + '$' + (a/1e9).toFixed(a >= 1e10 ? 1 : 2) + 'B';
+  if (a >= 1e6) return s + '$' + (a/1e6).toFixed(a >= 1e8 ? 0 : 1) + 'M';
+  if (a >= 1e3) return s + '$' + Math.round(a/1e3) + 'K';
+  return s + '$' + Math.round(a);
+}
+const full = v => (v < 0 ? '−$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+const fteFmt = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toLocaleString('en-US',{maximumFractionDigits:2}); };
+const amt = d => st.fund === 'gf' ? (st.meas === 'p' ? d.gp : d.ge) : (st.meas === 'p' ? d.p : d.e);
+const fte = d => st.fund === 'gf' ? d.gfte : d.fte;
+const tcolor = t => SI_TYPES.includes(t) ? 'var(--si)' : 'var(--nosi)';
+
+// filters: skip lets a view ignore one dimension (e.g. the type list ignores the type filter)
+function filtered(skip = {}){
+  const q = st.q.trim().toLowerCase();
+  return DPS.filter(d => {
+    if (st.fund === 'gf' && !d.gf) return false;
+    if (!skip.scope){ if (st.sa && d.sa !== st.sa) return false; if (st.b && d.b !== st.b) return false; }
+    if (st.si === 'y' && !d.si) return false;
+    if (st.si === 'n' && d.si) return false;
+    if (!skip.types && st.types.size && !st.types.has(d.tp)) return false;
+    if (st.rt !== 'all' && d.rt !== st.rt) return false;
+    if (q && !(String(d.id).includes(q) || d.name.toLowerCase().includes(q) || d.bn.toLowerCase().includes(q) || d.d.toLowerCase().includes(q) || d.sit.toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+
+/* ---------- controls ---------- */
+function bindSeg(id, key){
+  const seg = $(id);
+  seg.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    st[key] = b.dataset.v;
+    seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    if (key === 'si'){ // drop selected types that are no longer reachable
+      for (const t of [...st.types]) if ((st.si === 'y' && !SI_TYPES.includes(t)) || (st.si === 'n' && SI_TYPES.includes(t))) st.types.delete(t);
+    }
+    render();
+  });
+}
+bindSeg('#segSi','si'); bindSeg('#segFund','fund'); bindSeg('#segMeas','meas');
+[...new Set(DPS.map(d => d.rt))].sort().forEach(r => { const o = document.createElement('option'); o.value = r; o.textContent = r; $('#selRt').appendChild(o); });
+$('#selRt').addEventListener('change', e => { st.rt = e.target.value; render(); });
+let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { st.q = e.target.value; st.tbAll = false; render(); }, 120); });
+
+function buildChips(){
+  const mk = (box, list) => list.forEach(t => {
+    const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.dataset.t = t; c.textContent = t;
+    c.addEventListener('click', () => toggleType(t)); $(box).appendChild(c);
+  });
+  mk('#tgSi', SI_TYPES); mk('#tgNo', NO_TYPES);
+  $('#clearTypes').addEventListener('click', () => { st.types.clear(); render(); });
+}
+function toggleType(t){ st.types.has(t) ? st.types.delete(t) : st.types.add(t); st.tbAll = false; render(); }
+buildChips();
+
+/* ---------- tooltip ---------- */
+const tip = $('#tip');
+function showTip(e, html){ tip.innerHTML = html; tip.hidden = false; moveTip(e); }
+function moveTip(e){
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = e.clientX + pad, y = e.clientY + pad;
+  if (x + w > innerWidth - 8) x = e.clientX - w - pad;
+  if (y + h > innerHeight - 8) y = e.clientY - h - pad;
+  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+}
+const hideTip = () => { tip.hidden = true; };
+document.addEventListener('scroll', hideTip, {passive:true});
+
+/* ---------- render ---------- */
+function render(){
+  const rows = filtered();
+  const measName = st.meas === 'p' ? 'program spending' : 'total requirements';
+  const fundName = st.fund === 'gf' ? 'General Fund' : 'all funds';
+  const net = rows.reduce((s,d) => s + amt(d), 0);
+
+  // headline
+  $('#hNum').textContent = money(net);
+  $('#hCap').textContent = `net change in ${measName} · ${fundName} · ${rows.length} decision package${rows.length === 1 ? '' : 's'}`;
+
+  // chips
+  document.querySelectorAll('.chip').forEach(c => {
+    const t = c.dataset.t, isSi = SI_TYPES.includes(t);
+    c.setAttribute('aria-pressed', st.types.has(t));
+    c.disabled = (st.si === 'y' && !isSi) || (st.si === 'n' && isSi);
+  });
+  $('#clearTypes').hidden = !st.types.size;
+
+  renderCrumbs();
+  renderKpis(rows);
+  renderDiverging();
+  renderTypes();
+  renderTable(rows);
+  $('#thAmt').textContent = st.meas === 'p' ? 'Net change' : 'Requirements';
+}
+
+function renderCrumbs(){
+  const c = $('#crumbs'); const parts = [];
+  const lvl = st.b ? 'Bureau' : st.sa ? 'Service area' : 'Citywide';
+  if (st.sa || st.b) parts.push(`<button type="button" data-go="city">City of Portland</button>`); else parts.push(`<span class="here">City of Portland</span>`);
+  if (st.sa){ parts.push('<span class="sep">›</span>'); parts.push(st.b ? `<button type="button" data-go="sa">${esc(st.sa)}</button>` : `<span class="here">${esc(st.sa)}</span>`); }
+  if (st.b){ parts.push('<span class="sep">›</span>'); parts.push(`<span class="here">${esc(B[st.b].n)}</span>`); }
+  parts.push(`<span class="lvl">${lvl} view</span>`);
+  c.innerHTML = parts.join('');
+  c.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.go === 'city'){ st.sa = null; st.b = null; } else { st.b = null; }
+    st.dvAll = false; st.tbAll = false; render();
+  }));
+}
+
+function renderKpis(rows){
+  const inc = rows.reduce((s,d) => s + Math.max(0, amt(d)), 0);
+  const dec = rows.reduce((s,d) => s + Math.min(0, amt(d)), 0);
+  const nInc = rows.filter(d => amt(d) > 0).length, nDec = rows.filter(d => amt(d) < 0).length;
+  const f = rows.reduce((s,d) => s + fte(d), 0);
+  const nSi = rows.filter(d => d.si).length, nNo = rows.length - nSi;
+  const siAmt = rows.filter(d => d.si).reduce((s,d) => s + amt(d), 0);
+  const pct = rows.length ? Math.round(nSi / rows.length * 100) : 0;
+  $('#kpis').innerHTML = `
+    <div class="kpi"><div class="k">Decision packages</div><div class="v">${rows.length}</div><div class="s">${new Set(rows.map(d=>d.b)).size} bureaus</div></div>
+    <div class="kpi"><div class="k">Increases</div><div class="v pos" title="${full(inc)}">${money(inc)}</div><div class="s">${nInc} package${nInc===1?'':'s'}</div></div>
+    <div class="kpi"><div class="k">Decreases</div><div class="v neg" title="${full(dec)}">${money(dec)}</div><div class="s">${nDec} package${nDec===1?'':'s'}</div></div>
+    <div class="kpi"><div class="k">Net FTE change</div><div class="v">${fteFmt(f)}</div><div class="s">${st.fund === 'gf' ? 'General Fund positions' : 'positions, all funds'}</div></div>
+    <div class="kpi"><div class="k">With service impact <span class="pill mk">Mock</span></div><div class="v">${pct}%</div>
+      <div class="split" role="img" aria-label="${nSi} with service impact, ${nNo} without">${rows.length ? `<span class="a" style="flex:${nSi}"></span><span class="b" style="flex:${nNo}"></span>` : ''}</div>
+      <div class="s">${nSi} impact · ${nNo} no impact · ${money(siAmt)} net</div></div>`;
+}
+
+function renderDiverging(){
+  const base = filtered({scope:true});
+  let groups, title, onPick, sub;
+  if (!st.sa){
+    title = 'Net change by service area'; sub = 'Select a service area to see its bureaus.';
+    const m = new Map(); base.forEach(d => { const g = m.get(d.sa) || {k:d.sa, v:0, n:0}; g.v += amt(d); g.n++; m.set(d.sa, g); });
+    groups = [...m.values()].sort((a,b) => SA_ORDER.indexOf(a.k) - SA_ORDER.indexOf(b.k));
+    onPick = g => { st.sa = g.k; };
+  } else if (!st.b){
+    title = `Net change by bureau`; sub = `${st.sa}. Select a bureau to see its decision packages.`;
+    const m = new Map(); base.filter(d => d.sa === st.sa).forEach(d => { const g = m.get(d.b) || {k:d.b, lbl:d.bn, v:0, n:0}; g.v += amt(d); g.n++; m.set(d.b, g); });
+    groups = [...m.values()].sort((a,b) => b.v - a.v);
+    onPick = g => { st.b = g.k; };
+  } else {
+    title = 'Net change by decision package'; sub = `${B[st.b].n}. Select a package to open it in the table below.`;
+    groups = base.filter(d => d.b === st.b).map(d => ({k:d.id, lbl:d.name, sm:`DP ${d.id} · ${d.tp}`, v:amt(d), n:1, dp:d})).sort((a,b) => b.v - a.v);
+    onPick = g => { st.open.add(g.k); setTimeout(() => { const r = document.getElementById('dp-'+g.k); if (r) r.scrollIntoView({behavior:'smooth', block:'center'}); }, 30); };
+  }
+  $('#dvTitle').textContent = title; $('#dvSub').textContent = sub;
+  const box = $('#dv');
+  if (!groups.length){ box.innerHTML = `<div class="empty">No decision packages match these filters.</div>`; $('#dvMore').hidden = true; return; }
+  const LIMIT = 15, shown = st.dvAll ? groups : groups.slice(0, LIMIT);
+  const mx = Math.max(0, ...groups.map(g => g.v)), mn = Math.min(0, ...groups.map(g => g.v));
+  const span = (mx - mn) || 1, z = (-mn / span) * 100;
+  box.innerHTML = '';
+  shown.forEach(g => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'dvrow';
+    const w = Math.abs(g.v) / span * 100, left = g.v >= 0 ? z : z - w;
+    b.innerHTML = `<span class="lb">${esc(g.lbl || g.k)}${g.sm ? `<small>${esc(g.sm)}</small>` : `<small>${g.n} package${g.n===1?'':'s'}</small>`}</span>
+      <span class="tr"><span class="zero" style="left:${z}%"></span>${g.v ? `<span class="bar ${g.v >= 0 ? 'up':'dn'}" style="left:${left}%;width:${w}%"></span>` : ''}</span>
+      <span class="vl">${money(g.v)}</span>`;
+    b.setAttribute('aria-label', `${g.lbl || g.k}: ${money(g.v)} net, ${g.n} packages`);
+    b.addEventListener('click', () => { hideTip(); onPick(g); st.dvAll = false; st.tbAll = false; render(); });
+    b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(g.lbl || g.k)}</div><div class="big">${full(g.v)}</div><div class="s">${g.dp ? `${esc(g.dp.rt)} · ${fteFmt(fte(g.dp))} FTE` : `${g.n} decision package${g.n===1?'':'s'}`}</div>`));
+    b.addEventListener('mouseleave', hideTip);
+    box.appendChild(b);
+  });
+  const more = $('#dvMore');
+  more.hidden = groups.length <= LIMIT;
+  more.textContent = st.dvAll ? 'Show top 15' : `Show all ${groups.length}`;
+  more.onclick = () => { st.dvAll = !st.dvAll; renderDiverging(); };
+}
+
+function renderTypes(){
+  const base = filtered({types:true});
+  const agg = t => { const r = base.filter(d => d.tp === t); return {n:r.length, v:r.reduce((s,d)=>s+amt(d),0)}; };
+  const all = [...SI_TYPES, ...NO_TYPES].map(t => ({t, ...agg(t)}));
+  const mxN = Math.max(1, ...all.map(a => a.n));
+  const block = (title, list, color) => {
+    const sec = document.createElement('div');
+    sec.innerHTML = `<h3><span class="sw" style="background:${color}"></span>${title}</h3>`;
+    list.forEach(t => {
+      const a = all.find(x => x.t === t);
+      const off = (st.si === 'y' && !SI_TYPES.includes(t)) || (st.si === 'n' && SI_TYPES.includes(t));
+      const b = document.createElement('button'); b.type = 'button'; b.className = 'trow' + ((st.types.size && !st.types.has(t)) || off ? ' dim' : '');
+      b.setAttribute('aria-pressed', st.types.has(t)); b.disabled = off;
+      b.innerHTML = `<span class="lb">${esc(t)}</span><span class="tr"><span class="bar" style="display:block;width:${a.n/mxN*100}%;background:${color}"></span></span><span class="ct">${a.n}</span><span class="vl">${a.n ? money(a.v) : '—'}</span>`;
+      b.setAttribute('aria-label', `${t}: ${a.n} packages, ${money(a.v)} net`);
+      b.addEventListener('click', () => { hideTip(); toggleType(t); });
+      b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(t)}</div><div class="big">${full(a.v)}</div><div class="s">${a.n} decision package${a.n===1?'':'s'} · net ${st.meas === 'p' ? 'program spending' : 'requirements'}</div>`));
+      b.addEventListener('mouseleave', hideTip);
+      sec.appendChild(b);
+    });
+    return sec;
+  };
+  const tl = $('#tl'); tl.innerHTML = '';
+  tl.appendChild(block('Service impact', SI_TYPES, 'var(--si)'));
+  tl.appendChild(block('No service impact', NO_TYPES, 'var(--nosi)'));
+}
+
+function breakdown(title, obj){
+  const e = Object.entries(obj || {}).filter(([,v]) => v).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
+  if (!e.length) return '';
+  return `<h4>${title}</h4><table class="mini">${e.slice(0,8).map(([k,v]) => `<tr><td>${esc(k)}</td><td class="num ${v<0?'neg':''}">${full(v)}</td></tr>`).join('')}${e.length > 8 ? `<tr><td colspan="2">+ ${e.length-8} more</td></tr>` : ''}</table>`;
+}
+
+function renderTable(rows){
+  const k = st.sort.k, dir = st.sort.dir;
+  const key = {name:d=>d.name.toLowerCase(), bur:d=>d.bn, rt:d=>d.rt, tp:d=>(d.si?'0':'1')+d.tp, fte:d=>fte(d), amt:d=>amt(d)}[k];
+  const sorted = [...rows].sort((a,b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
+  const LIMIT = 25, shown = st.tbAll ? sorted : sorted.slice(0, LIMIT);
+  document.querySelectorAll('th button').forEach(b => {
+    const on = b.dataset.k === k; b.parentElement.setAttribute('aria-sort', on ? (dir > 0 ? 'ascending' : 'descending') : 'none');
+    b.dataset.arrow = on ? (dir > 0 ? ' ↑' : ' ↓') : '';
+  });
+  const tb = $('#tb');
+  if (!rows.length){ tb.innerHTML = `<tr><td colspan="7" class="empty">No decision packages match these filters.</td></tr>`; }
+  else tb.innerHTML = shown.map(d => {
+    const v = amt(d), open = st.open.has(d.id);
+    const main = `<tr class="dp${open?' open':''}" id="dp-${d.id}" data-id="${d.id}">
+      <td><button type="button" class="exp" aria-expanded="${open}" aria-label="Details for DP ${d.id}">${open ? '▾' : '▸'}</button></td>
+      <td class="nm"><div class="t">${esc(d.name)}</div><div class="id">DP ${d.id}<span class="show-sm"> · ${esc(d.b)}</span></div><div class="show-sm tag" style="margin-top:3px"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</div></td>
+      <td class="hide-sm">${esc(d.bn)}</td>
+      <td class="hide-sm">${esc(d.rt)}</td>
+      <td class="hide-sm"><span class="tag"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</span><br><span class="tag"><small>${d.si ? 'Service impact' : 'No service impact'}</small></span></td>
+      <td class="num hide-sm">${fte(d) ? fteFmt(fte(d)) : '—'}</td>
+      <td class="num ${v>0?'pos':v<0?'neg':''}" title="${full(v)}">${money(v)}</td></tr>`;
+    if (!open) return main;
+    return main + `<tr class="detail"><td colspan="7"><div class="dgrid">
+      <div>
+        <div class="meta"><span><b>Bureau</b>${esc(d.bn)}</span><span><b>Service area</b>${esc(d.sa)}</span><span><b>Request type</b>${esc(d.rt)}</span><span><b>Tag</b>${d.si ? 'Service impact' : 'No service impact'} · ${esc(d.tp)} <span class="pill mk">Mock</span></span></div>
+        <h4>Package description</h4><p>${esc(d.d || 'No description provided.')}</p>
+        <h4>Service impacts</h4><p>${esc(d.sit || 'None provided.')}</p>
+        ${d.eq ? `<h4>Equity outcomes and impact tracking</h4><p>${esc(d.eq)}</p>` : ''}
+      </div>
+      <div>
+        <div class="meta"><span><b>Program spending</b>${full(st.fund==='gf'?d.gp:d.p)}</span><span><b>Total requirements</b>${full(st.fund==='gf'?d.ge:d.e)}</span>${d.gfd ? `<span><b>GF discretionary</b>${full(d.gfd)}</span>` : ''}<span><b>FTE</b>${fteFmt(fte(d))}</span></div>
+        ${breakdown('Expenses by major object (all funds)', d.obj)}
+        ${breakdown('Expenses by fund', d.fund)}
+        ${breakdown('Resources by major object', d.rev)}
+      </div></div></td></tr>`;
+  }).join('');
+  tb.querySelectorAll('tr.dp').forEach(r => r.addEventListener('click', () => {
+    const id = +r.dataset.id; st.open.has(id) ? st.open.delete(id) : st.open.add(id); renderTable(filtered());
+  }));
+  $('#tbTitle').textContent = `Decision packages (${rows.length})`;
+  $('#tbCount').textContent = rows.length ? `Showing ${shown.length} of ${rows.length}` : '';
+  const more = $('#tbMore'); more.hidden = rows.length <= LIMIT;
+  more.textContent = st.tbAll ? `Show first ${LIMIT}` : `Show all ${rows.length}`;
+  more.onclick = () => { st.tbAll = !st.tbAll; renderTable(filtered()); };
+}
+document.querySelectorAll('th button').forEach(b => {
+  b.addEventListener('click', () => {
+    const k = b.dataset.k;
+    st.sort = st.sort.k === k ? {k, dir: -st.sort.dir} : {k, dir: (k === 'amt' || k === 'fte') ? -1 : 1};
+    renderTable(filtered());
+  });
+});
+const sortStyle = document.createElement('style');
+sortStyle.textContent = 'th button::after{content:attr(data-arrow)} .show-sm{display:none!important} @media (max-width:700px){.show-sm{display:inline!important} div.show-sm{display:flex!important;white-space:normal} .tbl-wrap{margin:0;padding:0} td,th{padding-left:6px;padding-right:6px}}';
+document.head.appendChild(sortStyle);
+
+render();
+</script>
+</body>
+</html>

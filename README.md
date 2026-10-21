@@ -20,3 +20,33 @@ City of Portland Ad Hoc Reporting Tool export, FY 2026-27 Adopted Budget (expens
 Totals tie to the FY 2026-27 Adopted Budget: Table 1 for all funds ($8,546,060,062), Figure 10 for the General Fund ($1,186,002,037), and Table 10 for the operating/capital split.
 
 Prosper Portland shows only its City-budgeted amount.
+
+---
+
+# Decision Package Dashboard (mockup)
+
+A mockup of a public decision package (DP) report for the FY 2026-27 Fall Supplemental Budget.
+
+**Live site:** https://brycelied.github.io/PortlandBudget/dp/
+
+## What it shows
+
+- **Drill-down:** citywide → service area → bureau → decision package, with net change bars at each level.
+- **Slicers:** service impact (all / service impact / no service impact), decision package type, fund (all funds or General Fund), measure (program spending or total requirements), current request type, and text search.
+- **Types:** service impact packages are tagged Enhance, Reduce, Create, Eliminate or Realign; packages with no service impact are tagged CSL add, Revenue replacement, New revenue, Contingency or reserve change, Realignment or Balancing.
+- **Ledger:** every package with its description, service impact statement, equity statement, and expenses by major object and fund.
+
+## Mock data
+
+The service impact flag and type tags are **not yet collected** in BFM. In this mockup they are placeholders assigned in `dp/build/prep.py` from each package's request type, amount and service impact text. Dollar amounts, FTE and package text are real requested figures.
+
+## Source and rebuild
+
+BFM Fall TAO – D7 – DP Data Export (financial and personnel exports): 3,736 line items, 271 decision packages, $523,101,221 net change in expense requirements. Service areas come from the FY 2026-27 Adopted Ad Hoc Reporting Tool export.
+
+```
+python3 dp/build/prep.py <DP export.xlsx> dp/build/bureau_sa.csv dp.json
+python3 dp/build/build.py dp/build/template.html dp.json dp/index.html
+```
+
+When bureaus start entering real tags, replace the mock tagging block in `prep.py` with the new BFM fields.
