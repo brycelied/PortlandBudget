@@ -3,308 +3,274 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Portland Decision Packages</title>
-<meta name="description" content="Mockup dashboard of decision packages in the City of Portland FY 2026-27 Fall Supplemental Budget, by service area, bureau and service impact.">
+<title>Fall Budget Program Changes</title>
+<meta name="description" content="Mockup: how decision packages in the City of Portland FY 2026-27 Fall Supplemental Budget would change each program's adopted budget.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,500;6..72,600&family=Public+Sans:wght@400;500;600;700&display=swap">
 <style>
-/* Layout: civic ledger, same look as the budget treemap. Masthead with the headline net change, slicers, KPI strip, two charts side by side, then the decision package ledger. */
+/* One quiet column. Serif for reading (title, summary, program descriptions); Public Sans with tabular figures for numbers and controls.
+   Color only encodes money: blue = increase, orange = decrease. Service impact is a filled dot, no service impact an open ring. */
 :root{
-  --bg:#0f1114; --surface:#171a1f; --surface-2:#1d2127; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
-  --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
-  --up:#3987e5; --down:#d95926; --si:#9085e9; --nosi:#199e70; --warn:#c98500;
-  --font-ui:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-label:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
-  color-scheme:dark;
+  --bg:#ffffff; --ink:#1d2a33; --ink-2:#44525c; --muted:#66737d; --faint:#9aa5ad;
+  --rule:#e4e8eb; --rule-2:#cfd6db; --hover:#f4f6f8; --open:#f7f9fa; --focus:#2a6fb0;
+  --up:#2a6fb0; --down:#bf5427; --up-ink:#245f97; --down-ink:#a8481f;
+  --scrim:rgba(20,30,38,.28); --panel:#ffffff;
+  --serif:"Newsreader", "Iowan Old Style", Georgia, serif;
+  --sans:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#14181c; --ink:#e8ecef; --ink-2:#c3cbd1; --muted:#929ea7; --faint:#6b7780;
+    --rule:#262d33; --rule-2:#36404a; --hover:#1b2026; --open:#181d22; --focus:#7fb0ea;
+    --up:#4f8fd6; --down:#d86d3c; --up-ink:#8ab8ec; --down-ink:#ee9a70;
+    --scrim:rgba(0,0,0,.5); --panel:#171c21; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#14181c; --ink:#e8ecef; --ink-2:#c3cbd1; --muted:#929ea7; --faint:#6b7780;
+  --rule:#262d33; --rule-2:#36404a; --hover:#1b2026; --open:#181d22; --focus:#7fb0ea;
+  --up:#4f8fd6; --down:#d86d3c; --up-ink:#8ab8ec; --down-ink:#ee9a70;
+  --scrim:rgba(0,0,0,.5); --panel:#171c21; color-scheme:dark;
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
-  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 48px}
-.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
-a{color:var(--focus)}
-button{font:inherit}
-:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;
+  padding:28px max(16px, env(safe-area-inset-right,0px)) 64px max(16px, env(safe-area-inset-left,0px))}
+.wrap{max-width:1040px;margin:0 auto}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:3px}
+.num{font-variant-numeric:tabular-nums lining-nums}
+.up{color:var(--up-ink)} .down{color:var(--down-ink)}
 
-header.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;border-bottom:1px solid var(--line);padding-bottom:16px}
-.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-.eyebrow a{color:var(--ink-2);text-decoration:none;text-transform:none;letter-spacing:0;font-weight:500}
-.eyebrow a:hover{color:var(--ink);text-decoration:underline}
-h1{font-family:var(--font-label);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:4px 0 0;text-wrap:balance}
-.headline{text-align:right;min-width:0}
-.headline .num{font-family:var(--font-label);font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.headline .cap{font-size:13px;color:var(--ink-2);margin-top:4px}
-@media (max-width:640px){.headline{text-align:left}}
+/* masthead */
+.top{display:flex;justify-content:space-between;gap:16px;font-size:13.5px;color:var(--muted);margin-bottom:28px}
+.top a{color:var(--muted);text-decoration:none;border-bottom:1px solid var(--rule-2)}
+.top a:hover{color:var(--ink)}
+h1{font-family:var(--serif);font-weight:500;font-size:clamp(30px,4.6vw,46px);line-height:1.08;letter-spacing:-.012em;margin:0;max-width:20ch;text-wrap:balance}
+.lede{font-family:var(--serif);font-size:clamp(19px,2.3vw,24px);line-height:1.38;color:var(--ink-2);margin:14px 0 0;max-width:46ch;text-wrap:pretty}
+.lede b{font-weight:600;color:var(--ink)}
+.note{font-size:13px;color:var(--muted);margin:14px 0 0;max-width:72ch}
+.note .ring,.note .dot{margin:0 2px}
 
-.mock{display:flex;gap:10px;align-items:flex-start;border:1px dashed color-mix(in oklab, var(--warn) 70%, transparent);background:color-mix(in oklab, var(--warn) 9%, var(--bg));
-  border-radius:8px;padding:10px 14px;font-size:14px;color:var(--ink-2)}
-.mock b{color:var(--ink)}
-.pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border-radius:4px;padding:1px 6px;line-height:1.5;white-space:nowrap}
-.pill.mk{border:1px solid var(--warn);color:#f0c060}
+/* filters */
+.filters{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;margin:36px 0 12px;padding-top:20px;border-top:1px solid var(--rule)}
+.seg{display:inline-flex;gap:2px;border-radius:999px;background:var(--hover);padding:3px}
+.seg button{all:unset;cursor:pointer;padding:5px 13px;border-radius:999px;font-size:14px;color:var(--ink-2);white-space:nowrap;display:inline-flex;align-items:center;gap:7px}
+.seg button:hover{color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--bg);color:var(--ink);font-weight:600;box-shadow:0 0 0 1px var(--rule-2)}
+.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.search{flex:1 1 200px;display:flex;justify-content:flex-end}
+.search input{font:inherit;font-size:14px;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--rule-2);padding:6px 2px;width:min(280px,100%);border-radius:0}
+.search input:focus{outline:none;border-bottom-color:var(--focus)}
+.search input::placeholder{color:var(--faint)}
+.tags{display:flex;flex-wrap:wrap;gap:6px 6px;align-items:center;min-height:30px}
+.tags .gl{font-size:13px;color:var(--muted);margin:0 4px 0 0;display:inline-flex;align-items:center;gap:6px}
+.tags .gap{width:14px}
+.tag{all:unset;cursor:pointer;font-size:13.5px;padding:3px 11px;border-radius:999px;border:1px solid var(--rule-2);color:var(--ink-2);white-space:nowrap}
+.tag:hover{border-color:var(--muted);color:var(--ink)}
+.tag[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.tag:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.clear{all:unset;cursor:pointer;font-size:13px;color:var(--focus);margin-left:6px}
+.clear:hover{text-decoration:underline}
 
-.controls{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:flex-end}
-.ctl{display:flex;flex-direction:column;gap:6px;min-width:0}
-.ctl-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line-strong);border-radius:8px;padding:2px;background:var(--surface);gap:2px}
-.seg button{all:unset;padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap;user-select:none}
-.seg button:hover{color:var(--ink);background:color-mix(in oklab, var(--ink) 6%, transparent)}
-.seg button[aria-pressed="true"]{background:var(--chip);color:var(--chip-ink)}
-.seg button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:1px}
-select,input[type=search]{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:7px 10px;min-height:36px}
-input[type=search]{width:240px;max-width:100%}
-select{max-width:100%}
-.ctl.grow{flex:1 1 220px}
-.ctl.grow input{width:100%}
+/* markers */
+.dot,.ring{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none;vertical-align:1px}
+.dot{background:var(--ink)}
+.ring{box-shadow:inset 0 0 0 1.5px var(--ink)}
+.muted .dot{background:var(--muted)} .muted .ring{box-shadow:inset 0 0 0 1.5px var(--muted)}
 
-.types{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:flex-start}
-.tgroup{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-.tgroup .gl{font-size:12px;font-weight:600;color:var(--ink-2);margin-right:2px;display:inline-flex;align-items:center}
-.chip{all:unset;cursor:pointer;font-size:13px;font-weight:500;padding:4px 10px;border-radius:999px;border:1px solid var(--line-strong);color:var(--ink-2);white-space:nowrap}
-.chip:hover{color:var(--ink);border-color:var(--muted)}
-.chip[aria-pressed="true"]{background:var(--chip);color:var(--chip-ink);border-color:var(--chip)}
-.chip[disabled]{opacity:.35;cursor:not-allowed}
-.chip:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-.linkbtn{all:unset;cursor:pointer;font-size:13px;color:var(--focus);font-weight:500}
-.linkbtn:hover{text-decoration:underline}
-.linkbtn:focus-visible{outline:2px solid var(--focus)}
-
-.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:14px;min-height:28px}
-.crumbs button{all:unset;cursor:pointer;color:var(--ink-2);font-weight:500;padding:2px 4px;border-radius:4px}
-.crumbs button:hover{color:var(--ink);text-decoration:underline}
+/* crumbs */
+.crumbs{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;margin:30px 0 6px;font-size:14px;color:var(--muted)}
+.crumbs button{all:unset;cursor:pointer;color:var(--focus)}
+.crumbs button:hover{text-decoration:underline}
 .crumbs button:focus-visible{outline:2px solid var(--focus)}
-.crumbs .here{font-weight:700;color:var(--ink);padding:2px 4px}
-.crumbs .sep{color:var(--muted)}
-.crumbs .lvl{margin-left:auto;font-size:12px;color:var(--muted)}
+.crumbs .sep{color:var(--faint)}
+.crumbs .here{color:var(--ink)}
+h2{font-family:var(--serif);font-weight:500;font-size:28px;line-height:1.15;margin:0 0 4px;letter-spacing:-.005em}
+.sub{color:var(--muted);font-size:14px;margin:0 0 18px;max-width:70ch}
 
-.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
-@media (max-width:1000px){.kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media (max-width:560px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px 14px;min-width:0}
-.kpi .k{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-.kpi .v{font-family:var(--font-label);font-weight:700;font-size:28px;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.kpi .s{font-size:12.5px;color:var(--ink-2)}
-.split{display:flex;height:8px;border-radius:4px;overflow:hidden;margin:8px 0 6px;gap:2px;background:var(--surface)}
-.split span{display:block;height:100%}
-.split .a{background:var(--si)}
-.split .b{background:var(--nosi)}
+/* tables of rows */
+.cols,.row{display:grid;grid-template-columns:minmax(0,1fr) 112px 112px 200px;gap:16px;align-items:center}
+.cols{font-size:12.5px;color:var(--muted);padding:0 12px 8px;border-bottom:1px solid var(--rule-2)}
+.cols span:not(:first-child){text-align:right}
+.row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 112px 112px 200px;gap:16px;align-items:center;width:100%;padding:12px;border-bottom:1px solid var(--rule);cursor:pointer}
+.row:hover{background:var(--hover)}
+.row:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.row .nm{min-width:0}
+.row .t{font-weight:600;line-height:1.3;display:block}
+.row .s{display:block;font-size:13px;color:var(--muted);margin-top:2px}
+.row .n{text-align:right;font-size:14.5px}
+.row .n.a{color:var(--ink-2)}
+.chg{display:grid;grid-template-columns:minmax(0,1fr) 84px;gap:10px;align-items:center}
+.chg .v{text-align:right;font-weight:600;font-size:14.5px;white-space:nowrap}
+.chg .v small{display:block;font-weight:400;font-size:12px;color:var(--muted)}
+.bar{position:relative;height:10px}
+.bar .z{position:absolute;left:50%;top:-4px;bottom:-4px;width:1px;background:var(--rule-2)}
+.bar .f{position:absolute;top:1px;height:8px}
+.bar .f.up{background:var(--up);border-radius:0 3px 3px 0;left:50%}
+.bar .f.down{background:var(--down);border-radius:3px 0 0 3px;right:50%}
+.unchanged .t{font-weight:500;color:var(--ink-2)}
+.unchanged .chg .v{color:var(--faint);font-weight:400}
+.more{all:unset;cursor:pointer;color:var(--focus);font-size:14px;padding:12px}
+.more:hover{text-decoration:underline}
+.more:focus-visible{outline:2px solid var(--focus)}
+.grp{font-family:var(--serif);font-size:19px;font-weight:500;padding:26px 12px 8px;border-bottom:1px solid var(--rule-2);display:flex;justify-content:space-between;gap:16px;align-items:baseline}
+.grp span{font-family:var(--sans);font-size:13px;color:var(--muted);font-weight:400}
+.section{margin-top:44px}
+.empty{padding:28px 12px;color:var(--muted)}
+.empty button{all:unset;cursor:pointer;color:var(--focus)}
 
-.grid2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
-@media (max-width:960px){.grid2{grid-template-columns:minmax(0,1fr)}}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px;min-width:0}
-.card h2{font-family:var(--font-label);font-size:20px;font-weight:700;margin:0;line-height:1.2;text-wrap:balance}
-.card .sub{font-size:13px;color:var(--muted);margin:2px 0 12px}
-.card-head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 16px;align-items:flex-start}
-.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:var(--ink-2);align-items:center}
+/* program marker strip */
 
-/* diverging bars */
-.dv{display:flex;flex-direction:column}
-.dvrow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,220px) minmax(0,1fr) 78px;gap:10px;align-items:center;padding:4px 6px;border-radius:5px;cursor:pointer;min-height:32px}
-.dvrow.static{cursor:default}
-.dvrow:hover{background:color-mix(in oklab, var(--ink) 5%, transparent)}
-.dvrow:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
-.dvrow .lb{font-size:13.5px;line-height:1.25;color:var(--ink);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.dvrow .lb small{display:block;color:var(--muted);font-size:11.5px}
-.dvrow .tr{position:relative;height:18px}
-.dvrow .zero{position:absolute;top:-6px;bottom:-6px;width:1px;background:var(--line-strong)}
-.dvrow .bar{position:absolute;top:2px;height:14px;min-width:2px}
-.dvrow .bar.up{background:var(--up);border-radius:0 4px 4px 0}
-.dvrow .bar.dn{background:var(--down);border-radius:4px 0 0 4px}
-.dvrow .vl{text-align:right;font-family:var(--font-label);font-weight:600;font-size:15px;font-variant-numeric:tabular-nums;color:var(--ink-2);white-space:nowrap}
-@media (max-width:560px){.dvrow{grid-template-columns:minmax(0,1fr) 72px;gap:2px 8px}.dvrow .lb{grid-column:1 / -1;-webkit-line-clamp:3}.dvrow .lb small{display:inline;margin-left:6px}}
-.more{margin-top:8px}
+/* expanded program */
+.prog.open > .row{background:var(--open);border-bottom-color:transparent}
+.pd{background:var(--open);border-bottom:1px solid var(--rule-2);padding:4px 12px 26px}
+.pd-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:28px 40px}
+@media (max-width:860px){.pd-grid{grid-template-columns:minmax(0,1fr)}}
+.desc{font-family:var(--serif);font-size:17px;line-height:1.55;color:var(--ink-2);max-width:62ch;white-space:pre-line}
+.desc.clamp{display:-webkit-box;-webkit-line-clamp:7;-webkit-box-orient:vertical;overflow:hidden}
+.desc.none{font-style:italic;color:var(--muted);font-size:15.5px}
+.readmore{all:unset;cursor:pointer;color:var(--focus);font-size:13.5px;margin-top:10px;display:inline-block}
+.readmore:hover{text-decoration:underline}
+.services{font-size:13.5px;color:var(--muted);margin:14px 0 0;max-width:62ch}
+.services.clamp{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.services b{color:var(--ink-2);font-weight:600}
+.facts{display:flex;gap:28px;flex-wrap:wrap;margin-top:16px;font-size:13.5px;color:var(--muted)}
+.facts b{display:block;color:var(--ink);font-weight:600;font-size:15px}
 
-/* type list */
-.tl{display:flex;flex-direction:column;gap:14px}
-.tl h3{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2);margin:0 0 4px;display:flex;align-items:center;gap:6px}
-.trow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,175px) minmax(0,1fr) 34px 74px;gap:10px;align-items:center;padding:4px 6px;border-radius:5px;cursor:pointer;width:100%}
-.trow:hover{background:color-mix(in oklab, var(--ink) 5%, transparent)}
-.trow:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
-.trow[aria-pressed="true"]{background:color-mix(in oklab, var(--ink) 9%, transparent);box-shadow:inset 2px 0 0 var(--ink)}
-.trow.dim{opacity:.38}
-.trow .lb{font-size:13.5px}
-.trow .tr{height:12px;position:relative}
-.trow .bar{height:12px;border-radius:0 4px 4px 0;min-width:2px}
-.trow .ct{font-family:var(--font-label);font-weight:600;font-size:15px;text-align:right;font-variant-numeric:tabular-nums}
-.trow .vl{font-family:var(--font-label);font-weight:500;font-size:14px;text-align:right;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap}
-.tlhead{display:grid;grid-template-columns:minmax(0,175px) minmax(0,1fr) 34px 74px;gap:10px;padding:0 6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
-.tlhead span:nth-child(3),.tlhead span:nth-child(4){text-align:right}
-@media (max-width:560px){.trow,.tlhead{grid-template-columns:minmax(0,1fr) 56px 28px 66px;gap:8px}}
+/* the ledger: adopted -> each request -> proposed */
+.ledger{font-size:14px}
+.lh{font-size:13px;color:var(--muted);margin:2px 0 8px}
+.lr{display:grid;grid-template-columns:minmax(0,1fr) 90px 104px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--rule)}
+.lr .lab{min-width:0}
+.lr .amt{text-align:right;white-space:nowrap;font-weight:600}
+.lr.base,.lr.total{font-weight:600}
+.lr.base .amt,.lr.total .amt{color:var(--ink)}
+.lr.base{border-bottom-color:var(--rule-2)}
+.lr.total{border-top:1px solid var(--ink);border-bottom:0;margin-top:-1px}
+.lr.total .pct{font-weight:400;color:var(--muted);font-size:12.5px;display:block}
+button.lr{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 90px 104px;gap:12px;align-items:center;padding:9px 6px 9px 18px;margin-left:-6px;width:calc(100% + 6px);border-bottom:1px solid var(--rule);cursor:pointer;border-radius:4px}
+button.lr:hover{background:var(--hover)}
+button.lr:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+button.lr .lab{display:flex;gap:9px;align-items:baseline}
+button.lr .lab .dot,button.lr .lab .ring{margin-top:5px;align-self:flex-start}
+button.lr .lt{display:block;font-weight:500;line-height:1.3}
+button.lr .lm{display:block;font-size:12.5px;color:var(--muted)}
+button.lr .open-dp{color:var(--focus);font-size:12.5px}
+.lr .bar{height:8px}
+.lr .bar .f{height:6px}
+.lr.other{color:var(--muted);font-size:13px;padding-left:18px}
 
-/* table */
-.tbl-wrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:8px 8px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
-th button{all:unset;cursor:pointer}
-th button:hover{color:var(--ink)}
-th button:focus-visible{outline:2px solid var(--focus)}
-th.num,td.num{text-align:right}
-td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-tr.dp{cursor:pointer}
-tr.dp:hover td{background:color-mix(in oklab, var(--ink) 4%, transparent)}
-tr.dp.open td{background:var(--surface-2);border-bottom-color:transparent}
-table.main{table-layout:fixed}
-th.c-x{width:30px}th.c-b{width:17%}th.c-r{width:15%}th.c-t{width:17%}th.c-f{width:64px}th.c-a{width:112px}
-@media (max-width:700px){th.c-a{width:96px}}
-td{overflow-wrap:anywhere}
-table.bal{table-layout:auto}
-table.bal th:first-child,table.bal td:first-child{position:sticky;left:0;z-index:1;background:var(--surface)!important}
-table.bal tr.grp td:first-child{position:static}
-@media (max-width:700px){table.bal th:first-child{min-width:150px}table.bal td:first-child{box-shadow:1px 0 0 var(--line)}}
-table.bal td{overflow-wrap:normal}
-@media (max-width:700px){td.nm{min-width:0}}
-td.nm .t{font-weight:600;color:var(--ink);line-height:1.3}
-td.nm .id{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-td.num{font-family:var(--font-label);font-weight:600;font-size:15.5px;font-variant-numeric:tabular-nums;white-space:nowrap}
-.pos{color:#8cbcf2}.neg{color:#f0936b}
-.tag{display:inline-flex;align-items:center;gap:6px;font-size:13px}
-.tag .dot{width:8px;height:8px;border-radius:50%}
-.tag small{color:var(--muted);font-size:11.5px}
-.exp{all:unset;cursor:pointer;color:var(--muted);font-size:13px;width:18px;display:inline-block;text-align:center}
-.exp:focus-visible{outline:2px solid var(--focus)}
-tr.detail > td{background:var(--surface-2);padding:6px 16px 20px}
-.dgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:4px 28px;margin-bottom:6px}
-@media (max-width:760px){.dgrid{grid-template-columns:minmax(0,1fr)}}
-.detail h4{margin-top:14px!important;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
-.detail p{margin:0;color:var(--ink-2);font-size:14px;max-width:75ch}
-.bal-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface);max-width:100%}
-table.bal{font-size:13.5px;min-width:100%;width:auto}
-table.bal th{background:var(--surface);color:var(--ink-2);text-transform:none;letter-spacing:0;font-size:12.5px;white-space:normal;vertical-align:bottom;min-width:110px;padding:8px 10px}
-table.bal th:first-child{min-width:200px}
-table.bal td{padding:6px 10px;border-bottom:1px solid var(--line);background:transparent!important;color:var(--ink-2)}
-table.bal td.num{font-size:14.5px;color:var(--ink)}
-table.bal td.num.neg{color:#f0936b}
-table.bal td.zero{color:var(--muted)}
-table.bal td.ind{padding-left:22px}
-table.bal tr.grp td{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:12px;border-bottom:0}
-table.bal tr.sub td{font-weight:700;color:var(--ink);border-top:1px solid var(--line-strong)}
-table.bal tr.net td{font-weight:700;color:var(--ink);border-top:2px solid var(--line-strong);border-bottom:0;background:color-mix(in oklab, var(--ink) 4%, transparent)!important}
-table.bal td.ok{color:#5fd0a3!important;font-family:var(--font-ui);font-size:13px}
-table.bal td.ok::before{content:"✓ "}
-table.bal td.off{color:#f0c060!important}
-table.bal td.off::before{content:"⚠ "}
-table.bal.pos td{vertical-align:top}
-table.bal .mono{font-variant-numeric:tabular-nums;font-size:12.5px;white-space:nowrap}
-table.bal .pj{font-size:12px;color:var(--muted);margin-top:2px}
-.note{font-size:12.5px;color:var(--muted);margin:6px 0 0;max-width:110ch}
-.mini{width:100%;font-size:13px}
-.mini td{border:0;padding:3px 0;color:var(--ink-2)}
-.mini td.num{font-size:14px}
-.meta{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;color:var(--ink-2);margin:6px 0 4px}
-.meta b{color:var(--muted);font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-right:4px}
-@media (max-width:700px){.hide-sm{display:none}}
-.empty{padding:28px 8px;text-align:center;color:var(--ink-2)}
-.tfoot{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+/* drawer */
+.scrim{position:fixed;inset:0;background:var(--scrim);z-index:20;opacity:0;transition:opacity .18s ease}
+.scrim.on{opacity:1}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(640px,100%);background:var(--panel);z-index:21;overflow-y:auto;
+  box-shadow:-1px 0 0 var(--rule-2), -24px 0 48px rgba(0,0,0,.12);transform:translateX(24px);opacity:0;transition:transform .2s ease, opacity .2s ease;
+  padding:22px max(20px, env(safe-area-inset-right,0px)) 48px 28px}
+.drawer.on{transform:none;opacity:1}
+@media (max-width:560px){.drawer{padding-left:18px}}
+@media (prefers-reduced-motion: reduce){.drawer,.scrim{transition:none}}
+.dhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+.close{all:unset;cursor:pointer;font-size:14px;color:var(--muted);padding:4px 8px;border-radius:6px;border:1px solid var(--rule-2)}
+.close:hover{color:var(--ink)}
+.close:focus-visible{outline:2px solid var(--focus)}
+.did{font-size:13.5px;color:var(--muted)}
+.drawer h3{font-family:var(--serif);font-weight:500;font-size:27px;line-height:1.15;margin:4px 0 10px;text-wrap:balance}
+.dmeta{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 16px;font-size:14px;margin:14px 0 4px}
+.dmeta dt{color:var(--muted)}
+.dmeta dd{margin:0;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sample{font-size:11.5px;color:var(--muted);border:1px dashed var(--rule-2);border-radius:999px;padding:0 7px}
+.drawer h4{font-size:14px;font-weight:600;margin:28px 0 8px;color:var(--ink)}
+.drawer p.txt{font-family:var(--serif);font-size:16.5px;line-height:1.55;color:var(--ink-2);margin:0;max-width:62ch}
+.drawer p.txt.none{font-style:italic;color:var(--muted)}
+.plist .pl{all:unset;box-sizing:border-box;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:12px;padding:8px 6px;margin:0 -6px;border-bottom:1px solid var(--rule);width:calc(100% + 12px);border-radius:4px;font-size:14px}
+.plist .pl:hover{background:var(--hover)}
+.plist .pl:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.plist .pl small{display:block;color:var(--muted);font-size:12.5px}
+.plist .pl .amt{text-align:right;font-weight:600}
+.tw{overflow-x:auto;margin:0 -2px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th{font-weight:500;color:var(--muted);text-align:right;padding:6px 8px;border-bottom:1px solid var(--rule-2);font-size:12.5px;vertical-align:bottom;min-width:92px}
+th:first-child{text-align:left;min-width:170px;padding-left:0}
+td{padding:6px 8px;border-bottom:1px solid var(--rule);text-align:right;white-space:nowrap}
+td:first-child{text-align:left;padding-left:0;white-space:normal}
+tr.g td{color:var(--muted);font-size:12.5px;padding-top:14px;border-bottom:0}
+tr.st td{font-weight:600;border-top:1px solid var(--rule-2)}
+tr.nt td{font-weight:600;border-top:1px solid var(--ink);border-bottom:0}
+td.z{color:var(--faint)}
+td.ok{color:var(--muted);font-weight:500}
+td.off{color:var(--down-ink)}
+td .pj{display:block;font-size:12px;color:var(--muted);white-space:normal}
+.tnote{font-size:12.5px;color:var(--muted);margin:8px 0 0;max-width:70ch}
 
-footer{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:14px;display:grid;gap:6px}
-footer p{margin:0;max-width:110ch}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--rule);font-size:13px;color:var(--muted);display:grid;gap:8px}
+footer p{margin:0;max-width:86ch}
 
-#tip{position:fixed;pointer-events:none;z-index:20;background:#0b0d10;border:1px solid var(--line-strong);border-radius:6px;padding:8px 10px;font-size:13px;max-width:280px;box-shadow:0 6px 20px rgba(0,0,0,.45)}
-#tip .t{font-weight:600}
-#tip .big{font-family:var(--font-label);font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
-#tip .s{color:var(--ink-2)}
-@media (forced-colors:active){.bar,.split span,.dot,.sw{forced-color-adjust:none}}
+/* phones */
+@media (max-width:720px){
+  .cols{display:none}
+  .row{grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 4px}
+  .row .n{display:none}
+  .row .chg{grid-template-columns:auto;}
+  .row .chg .bar{display:none}
+  .row .s2{display:block}
+  .pd{padding:4px 4px 22px}
+  .lr,button.lr{grid-template-columns:minmax(0,1fr) 92px}
+  .lr .bar{display:none}
+  .search{justify-content:flex-start}
+  .seg{flex-wrap:wrap;border-radius:14px}
+  .seg button{padding:5px 11px}
+  .grp{padding-left:4px;padding-right:4px}
+}
+.s2{display:none;font-size:13px;color:var(--muted);margin-top:2px}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <header class="mast">
-    <div>
-      <p class="eyebrow"><span>City of Portland · FY 2026-27 Fall Supplemental Budget</span><a href="../">← Budget treemap</a></p>
-      <h1>Decision Package Dashboard</h1>
-    </div>
-    <div class="headline">
-      <div class="num" id="hNum">—</div>
-      <div class="cap" id="hCap"></div>
-    </div>
-  </header>
+  <div class="top"><span>City of Portland, FY 2026-27 Fall Supplemental Budget</span><a href="../">Adopted budget treemap</a></div>
 
-  <div class="mock" role="note">
-    <span class="pill mk">Mockup</span>
-    <span><b>Service impact flags and decision package types are placeholder values.</b> They were assigned for illustration from each package's request type, amount and service impact statement, and will be replaced with bureau-entered tags once they are collected. Dollar amounts, FTE and package text are real requested figures from the Fall TAO D7 data export.</span>
-  </div>
+  <h1>Fall budget requests, program by program</h1>
+  <p class="lede" id="lede"></p>
+  <p class="note">Mockup. Dollar amounts come from BFM and the FY 2026-27 Adopted Budget, and program descriptions from the adopted budget book. Service impact flags and type tags are sample values until bureaus begin entering them.</p>
 
-  <section class="controls" aria-label="Filters">
-    <div class="ctl">
-      <span class="ctl-label" id="lSi">Service impact</span>
-      <div class="seg" role="group" aria-labelledby="lSi" id="segSi">
-        <button type="button" data-v="all" aria-pressed="true">All</button>
-        <button type="button" data-v="y" aria-pressed="false"><span class="sw" style="background:var(--si)"></span>Service impact</button>
-        <button type="button" data-v="n" aria-pressed="false"><span class="sw" style="background:var(--nosi)"></span>No service impact</button>
-      </div>
+  <section class="filters" aria-label="Filters">
+    <div class="seg" role="group" aria-label="Service impact" id="segSi">
+      <button type="button" data-v="all" aria-pressed="true">All requests</button>
+      <button type="button" data-v="y" aria-pressed="false"><span class="dot"></span>Service impact</button>
+      <button type="button" data-v="n" aria-pressed="false"><span class="ring"></span>No service impact</button>
     </div>
-    <div class="ctl">
-      <span class="ctl-label" id="lFund">Funds</span>
-      <div class="seg" role="group" aria-labelledby="lFund" id="segFund">
-        <button type="button" data-v="all" aria-pressed="true">All funds</button>
-        <button type="button" data-v="gf" aria-pressed="false">General Fund</button>
-        <button type="button" data-v="ngf" aria-pressed="false">Non-General Fund</button>
-      </div>
+    <div class="seg" role="group" aria-label="Funds" id="segFund">
+      <button type="button" data-v="all" aria-pressed="true">All funds</button>
+      <button type="button" data-v="gf" aria-pressed="false">General Fund</button>
+      <button type="button" data-v="ngf" aria-pressed="false">Other funds</button>
     </div>
-    <div class="ctl grow">
-      <label class="ctl-label" for="q">Search packages</label>
-      <input type="search" id="q" placeholder="Name, number or text" autocomplete="off">
-    </div>
+    <div class="search"><input type="search" id="q" placeholder="Search programs and requests" aria-label="Search programs and requests" autocomplete="off"></div>
   </section>
+  <div class="tags" id="tags" aria-label="Request type"></div>
 
-  <section class="types" aria-label="Decision package type">
-    <div class="tgroup" id="tgSi"><span class="gl"><span class="sw" style="background:var(--si)"></span>Service impact</span></div>
-    <div class="tgroup" id="tgNo"><span class="gl"><span class="sw" style="background:var(--nosi)"></span>No service impact</span></div>
-    <button type="button" class="linkbtn" id="clearTypes" hidden>Clear types</button>
-    <span class="pill mk" title="Types are placeholder values in this mockup">Mock tags</span>
-  </section>
+  <nav class="crumbs" id="crumbs" aria-label="Location"></nav>
+  <h2 id="h2"></h2>
+  <p class="sub" id="sub"></p>
+  <div id="groups"></div>
 
-  <nav class="crumbs" aria-label="Drill-down level" id="crumbs"></nav>
-
-  <section class="kpis" id="kpis" aria-label="Summary"></section>
-
-  <div class="grid2">
-    <section class="card" aria-labelledby="dvTitle">
-      <div class="card-head">
-        <div><h2 id="dvTitle">Net change by service area</h2><p class="sub" id="dvSub"></p></div>
-        <div class="legend"><span><span class="sw" style="background:var(--up)"></span>Increase</span><span><span class="sw" style="background:var(--down)"></span>Decrease</span></div>
-      </div>
-      <div class="dv" id="dv"></div>
-      <button type="button" class="linkbtn more" id="dvMore" hidden></button>
-    </section>
-    <section class="card" aria-labelledby="tlTitle">
-      <h2 id="tlTitle">By decision package type</h2>
-      <p class="sub">Number of packages and net change. Select a type to filter.</p>
-      <div class="tlhead" aria-hidden="true"><span>Type</span><span>Packages</span><span>#</span><span>Net</span></div>
-      <div class="tl" id="tl"></div>
-    </section>
-  </div>
-
-  <section class="card" aria-labelledby="tbTitle">
-    <div class="card-head">
-      <div><h2 id="tbTitle">Decision packages</h2><p class="sub" id="tbSub">Select a row for the package description, service impacts and line-item detail.</p></div>
-    </div>
-    <div class="tbl-wrap">
-      <table class="main">
-        <thead><tr>
-          <th class="c-x"><span class="sr" hidden>Expand</span></th>
-          <th><button type="button" data-k="name">Decision package</button></th>
-          <th class="hide-sm c-b"><button type="button" data-k="bur">Bureau</button></th>
-          <th class="hide-sm c-r"><button type="button" data-k="rt">Request type</button></th>
-          <th class="hide-sm c-t"><button type="button" data-k="tp">Type <span class="pill mk">Mock</span></button></th>
-          <th class="num hide-sm c-f"><button type="button" data-k="fte">FTE</button></th>
-          <th class="num c-a"><button type="button" data-k="amt" id="thAmt">Requirements</button></th>
-        </tr></thead>
-        <tbody id="tb"></tbody>
-      </table>
-    </div>
-    <div class="tfoot"><span id="tbCount"></span><button type="button" class="linkbtn" id="tbMore" hidden></button></div>
+  <section class="section" id="progSection">
+    <h2 id="ph2" class="ph2"></h2>
+    <p class="sub" id="psub"></p>
+    <div id="progs"></div>
   </section>
 
   <footer>
-    <p><b>Source:</b> City of Portland BFM, Fall TAO – D7 – DP Data Export (financial and personnel exports), FY 2026-27 Fall Supplemental requested amounts, __LINES__ line items across __NDP__ decision packages. Service areas and bureau names follow the FY 2026-27 Adopted Budget (Ad Hoc Reporting Tool).</p>
-    <p><b>Amounts:</b> net change in requirements, including contingency and reserves; citywide it sums to __TOTEXP__. The financial export leaves out personnel costs generated by positions, so the __POSCOST__ in position costs from the personnel export is added to Personnel; with it, every package's resources equal its requirements. <i>General Fund</i> and <i>Non-General Fund</i> limit amounts and FTE to Fund 100 line items or all other funds. FTE is the net change in budgeted positions from the personnel export.</p>
-    <p><b>Mock data:</b> the service impact flag and the type tags (Enhance, Reduce, Create, Eliminate, Realign; CSL add, Revenue replacement, New revenue, Contingency or reserve change, Realignment, Balancing) are not in the current export and were assigned for illustration only.</p>
+    <p><b>Adopted</b> is the FY 2026-27 Adopted Budget requirements for each program offer (Ad Hoc Reporting Tool), including fund-level requirements such as contingency. <b>Proposed</b> adds the Fall requests that match your filters. Requests are from the Fall TAO D7 decision package export (__LINES__ line items, __NDP__ packages, __TOTEXP__ net). Position costs from the personnel export (__POSCOST__) are included, because the financial export leaves them out.</p>
+    <p>Requests that only change resources, such as swapping one revenue for another, don't change any program's budget, so they don't appear here.</p>
+    <p>A program offer is the level at which the adopted budget book describes services. A single request can change several programs, and a program can be changed by several requests.</p>
   </footer>
 </div>
-<div id="tip" hidden></div>
+
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden></aside>
 
 <script>
 const DATA = __DATA__;
@@ -312,321 +278,321 @@ const SI_TYPES = ['Enhance','Reduce','Create','Eliminate','Realign'];
 const NO_TYPES = ['CSL add','Revenue replacement','New revenue','Contingency or reserve change','Realignment','Balancing'];
 const SA_ORDER = ['Public Works','Public Safety','Community & Economic Development','City Operations','City Administrator','Office of the City Auditor','City Council','Office of the Mayor'];
 const B = DATA.bureaus;
-const DPS = DATA.dps.map(d => ({...d, sa: B[d.b].sa, bn: B[d.b].n}));
+const PROGS = DATA.programs.map(p => ({...p, sa: B[p.b].sa, bn: B[p.b].n}));
+const PK = Object.fromEntries(PROGS.map(p => [p.k, p]));
+const DPS = Object.fromEntries(DATA.dps.map(d => [d.id, d]));
+const BY_PROG = {};
+DATA.dps.forEach(d => d.pl.forEach(([k, v, g, f, fg]) => (BY_PROG[k] ||= []).push({id:d.id, v, g, f, fg})));
 
-const st = {sa:null, b:null, si:'all', fund:'all', q:'', types:new Set(), sort:{k:'amt',dir:-1}, open:new Set(), dvAll:false, tbAll:false};
-
+const st = {sa:null, b:null, si:'all', fund:'all', tags:new Set(), q:'', open:new Set(), more:false, dp:null};
 const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-function money(v, signed=true){
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- formatting ---------- */
+function money(v, signed=false){
   const a = Math.abs(v), s = v < 0 ? '−' : (signed && v > 0 ? '+' : '');
-  if (a >= 1e9) return s + '$' + (a/1e9).toFixed(a >= 1e10 ? 1 : 2) + 'B';
+  if (a >= 1e9) return s + '$' + (a/1e9).toFixed(2) + 'B';
   if (a >= 1e6) return s + '$' + (a/1e6).toFixed(a >= 1e8 ? 0 : 1) + 'M';
   if (a >= 1e3) return s + '$' + Math.round(a/1e3) + 'K';
   return s + '$' + Math.round(a);
 }
-const full = v => (v < 0 ? '−$' : '$') + Math.abs(Math.round(v)).toLocaleString('en-US');
-const fteFmt = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toLocaleString('en-US',{maximumFractionDigits:2}); };
-const amt = d => st.fund === 'gf' ? d.ge : st.fund === 'ngf' ? d.e - d.ge : d.e;
-const fte = d => st.fund === 'gf' ? d.gfte : st.fund === 'ngf' ? Math.round((d.fte - d.gfte)*100)/100 : d.fte;
-const FUND_NAME = {all:'all funds', gf:'General Fund', ngf:'non-General Fund'};
-const tcolor = t => SI_TYPES.includes(t) ? 'var(--si)' : 'var(--nosi)';
+const full = (v, signed=false) => (v < 0 ? '−' : (signed && v > 0 ? '+' : '')) + '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+const words = v => { const a = Math.abs(v);
+  if (a >= 1e9) return '$' + (a/1e9).toFixed(2) + ' billion';
+  if (a >= 1e6) return '$' + (a/1e6).toFixed(1) + ' million';
+  if (a >= 1e3) return '$' + Math.round(a/1e3) + ' thousand';
+  return '$' + Math.round(a); };
+const fteF = v => { const r = Math.round(v*100)/100; return r.toLocaleString('en-US',{minimumFractionDigits:r%1?1:0, maximumFractionDigits:2}); };
+const fteS = v => (v > 0 ? '+' : v < 0 ? '−' : '') + fteF(Math.abs(v));
+const pct = (c, a) => !a ? (c ? 'new' : '') : ((c/a*100 > 0 ? '+' : c/a*100 < 0 ? '−' : '') + Math.abs(c/a*100).toFixed(Math.abs(c/a*100) < 10 ? 1 : 0) + '%');
+const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : '';
+const marker = si => `<span class="${si ? 'dot' : 'ring'}" aria-hidden="true"></span>`;
 
-// filters: skip lets a view ignore one dimension (e.g. the type list ignores the type filter)
-function filtered(skip = {}){
-  const q = st.q.trim().toLowerCase();
-  return DPS.filter(d => {
-    if (st.fund === 'gf' && !d.gf) return false;
-    if (st.fund === 'ngf' && !d.ngf) return false;
-    if (!skip.scope){ if (st.sa && d.sa !== st.sa) return false; if (st.b && d.b !== st.b) return false; }
-    if (st.si === 'y' && !d.si) return false;
-    if (st.si === 'n' && d.si) return false;
-    if (!skip.types && st.types.size && !st.types.has(d.tp)) return false;
-    if (q && !(String(d.id).includes(q) || d.name.toLowerCase().includes(q) || d.bn.toLowerCase().includes(q) || d.d.toLowerCase().includes(q) || d.sit.toLowerCase().includes(q))) return false;
-    return true;
-  });
+/* ---------- filtering ---------- */
+const dpOK = d => (st.si === 'all' || (st.si === 'y') === d.si) && (!st.tags.size || st.tags.has(d.tp));
+const fundAmt = x => st.fund === 'gf' ? x.g : st.fund === 'ngf' ? x.v - x.g : x.v;
+const fundFte = x => st.fund === 'gf' ? x.fg : st.fund === 'ngf' ? x.f - x.fg : x.f;
+const adopted = p => st.fund === 'gf' ? p.ag : st.fund === 'ngf' ? p.a - p.ag : p.a;
+const adoptedFte = p => st.fund === 'gf' ? p.fg : st.fund === 'ngf' ? p.f - p.fg : p.f;
+
+function progState(p){
+  const reqs = (BY_PROG[p.k] || []).filter(x => dpOK(DPS[x.id]) && (fundAmt(x) || fundFte(x)))
+    .map(x => ({...x, amt: fundAmt(x), fte: fundFte(x)})).sort((a,b) => Math.abs(b.amt) - Math.abs(a.amt));
+  const chg = reqs.reduce((s,x) => s + x.amt, 0);
+  return {p, reqs, chg, a: adopted(p), fteA: adoptedFte(p), fteC: reqs.reduce((s,x) => s + x.fte, 0)};
+}
+function matchesQ(ps){
+  const q = st.q.trim().toLowerCase(); if (!q) return true;
+  const p = ps.p;
+  if ((p.n + ' ' + p.pn + ' ' + p.bn + ' ' + p.c).toLowerCase().includes(q)) return true;
+  if (p.d.toLowerCase().includes(q)) return true;
+  return ps.reqs.some(x => String(x.id).includes(q) || DPS[x.id].name.toLowerCase().includes(q));
+}
+// all programs in the current area (for adopted totals), and the subset that matches the filters
+function scoped(){
+  const all = PROGS.filter(p => (!st.sa || p.sa === st.sa) && (!st.b || p.b === st.b))
+    .filter(p => st.fund === 'all' || adopted(p) || (BY_PROG[p.k]||[]).some(x => fundAmt(x)))
+    .map(progState);
+  const typeOn = st.si !== 'all' || st.tags.size;
+  const rows = all.filter(matchesQ).filter(ps => !typeOn || ps.reqs.length);
+  return {all, rows};
 }
 
 /* ---------- controls ---------- */
 function bindSeg(id, key){
-  const seg = $(id);
-  seg.addEventListener('click', e => {
+  $(id).addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     st[key] = b.dataset.v;
-    seg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
-    if (key === 'si'){ // drop selected types that are no longer reachable
-      for (const t of [...st.types]) if ((st.si === 'y' && !SI_TYPES.includes(t)) || (st.si === 'n' && SI_TYPES.includes(t))) st.types.delete(t);
-    }
-    render();
+    $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    if (key === 'si') [...st.tags].forEach(t => { if ((st.si === 'y' && !SI_TYPES.includes(t)) || (st.si === 'n' && SI_TYPES.includes(t))) st.tags.delete(t); });
+    st.more = false; render();
   });
 }
 bindSeg('#segSi','si'); bindSeg('#segFund','fund');
-let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { st.q = e.target.value; st.tbAll = false; render(); }, 120); });
+let qt; $('#q').addEventListener('input', e => { clearTimeout(qt); qt = setTimeout(() => { st.q = e.target.value; st.more = false; render(); }, 140); });
 
-function buildChips(){
-  const mk = (box, list) => list.forEach(t => {
-    const c = document.createElement('button'); c.type = 'button'; c.className = 'chip'; c.dataset.t = t; c.textContent = t;
-    c.addEventListener('click', () => toggleType(t)); $(box).appendChild(c);
-  });
-  mk('#tgSi', SI_TYPES); mk('#tgNo', NO_TYPES);
-  $('#clearTypes').addEventListener('click', () => { st.types.clear(); render(); });
+function renderTags(){
+  const grp = (label, si, list) => `<span class="gl">${marker(si)}${label}</span>` + list.map(t => `<button type="button" class="tag" data-t="${esc(t)}" aria-pressed="${st.tags.has(t)}">${esc(t)}</button>`).join('');
+  let h = '';
+  if (st.si !== 'n') h += grp(st.si === 'all' ? 'Service impact' : 'Type', true, SI_TYPES);
+  if (st.si === 'all') h += '<span class="gap"></span>';
+  if (st.si !== 'y') h += grp(st.si === 'all' ? 'No service impact' : 'Type', false, NO_TYPES);
+  if (st.tags.size) h += `<button type="button" class="clear" id="clearTags">Clear types</button>`;
+  $('#tags').innerHTML = h;
+  $('#tags').querySelectorAll('.tag').forEach(b => b.addEventListener('click', () => { const t = b.dataset.t; st.tags.has(t) ? st.tags.delete(t) : st.tags.add(t); st.more = false; render(); }));
+  const c = $('#clearTags'); if (c) c.addEventListener('click', () => { st.tags.clear(); render(); });
 }
-function toggleType(t){ st.types.has(t) ? st.types.delete(t) : st.types.add(t); st.tbAll = false; render(); }
-buildChips();
 
-/* ---------- tooltip ---------- */
-const tip = $('#tip');
-function showTip(e, html){ tip.innerHTML = html; tip.hidden = false; moveTip(e); }
-function moveTip(e){
-  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
-  let x = e.clientX + pad, y = e.clientY + pad;
-  if (x + w > innerWidth - 8) x = e.clientX - w - pad;
-  if (y + h > innerHeight - 8) y = e.clientY - h - pad;
-  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+/* ---------- pieces ---------- */
+function bar(v, max){
+  if (!v || !max) return `<span class="bar"><span class="z"></span></span>`;
+  const w = Math.max(1.5, Math.abs(v) / max * 50);
+  return `<span class="bar"><span class="z"></span><span class="f ${v > 0 ? 'up' : 'down'}" style="width:${w}%"></span></span>`;
 }
-const hideTip = () => { tip.hidden = true; };
-document.addEventListener('scroll', hideTip, {passive:true});
+function chgCell(c, a, max){
+  const p = pct(c, a);
+  return `<span class="chg">${bar(c, max)}<span class="v num ${cls(c)}">${c ? money(c, true) : 'No change'}${c && p ? `<small>${p}</small>` : ''}</span></span>`;
+}
+
+function lede(rows, all){
+  const ch = rows.filter(r => r.reqs.length);
+  const net = ch.reduce((s,r) => s + r.chg, 0), ado = all.reduce((s,r) => s + r.a, 0);
+  const nReq = new Set(ch.flatMap(r => r.reqs.map(x => x.id))).size;
+  const where = st.b ? B[st.b].n : st.sa ? st.sa : 'Citywide';
+  const fund = st.fund === 'gf' ? ' General Fund' : st.fund === 'ngf' ? ' non-General Fund' : '';
+  if (!ch.length) return `${esc(where)}, no requests match these filters.`;
+  return `${esc(where)}, <b>${nReq} request${nReq===1?'':'s'}</b> would ${net >= 0 ? 'add' : 'cut'} <b>${words(net)}</b> ${net >= 0 ? 'to' : 'from'} ${fund ? 'a' + fund : 'an'} adopted budget of ${words(ado)}, changing <b>${ch.length} program${ch.length===1?'':'s'}</b>.`;
+}
 
 /* ---------- render ---------- */
 function render(){
-  const rows = filtered();
-  const fundName = FUND_NAME[st.fund];
-  const net = rows.reduce((s,d) => s + amt(d), 0);
-
-  // headline
-  $('#hNum').textContent = money(net);
-  $('#hCap').textContent = `net change in requirements · ${fundName} · ${rows.length} decision package${rows.length === 1 ? '' : 's'}`;
-
-  // chips
-  document.querySelectorAll('.chip').forEach(c => {
-    const t = c.dataset.t, isSi = SI_TYPES.includes(t);
-    c.setAttribute('aria-pressed', st.types.has(t));
-    c.disabled = (st.si === 'y' && !isSi) || (st.si === 'n' && isSi);
-  });
-  $('#clearTypes').hidden = !st.types.size;
-
+  renderTags();
+  const {all, rows} = scoped();
+  $('#lede').innerHTML = lede(rows, all);
   renderCrumbs();
-  renderKpis(rows);
-  renderDiverging();
-  renderTypes();
-  renderTable(rows);
+  renderGroups(rows, all);
+  renderPrograms(rows);
 }
 
 function renderCrumbs(){
-  const c = $('#crumbs'); const parts = [];
-  const lvl = st.b ? 'Bureau' : st.sa ? 'Service area' : 'Citywide';
-  if (st.sa || st.b) parts.push(`<button type="button" data-go="city">City of Portland</button>`); else parts.push(`<span class="here">City of Portland</span>`);
-  if (st.sa){ parts.push('<span class="sep">›</span>'); parts.push(st.b ? `<button type="button" data-go="sa">${esc(st.sa)}</button>` : `<span class="here">${esc(st.sa)}</span>`); }
-  if (st.b){ parts.push('<span class="sep">›</span>'); parts.push(`<span class="here">${esc(B[st.b].n)}</span>`); }
-  parts.push(`<span class="lvl">${lvl} view</span>`);
-  c.innerHTML = parts.join('');
-  c.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
-    if (b.dataset.go === 'city'){ st.sa = null; st.b = null; } else { st.b = null; }
-    st.dvAll = false; st.tbAll = false; render();
+  const parts = [];
+  parts.push(st.sa ? `<button type="button" data-go="city">City of Portland</button>` : `<span class="here">City of Portland</span>`);
+  if (st.sa){ parts.push('<span class="sep">/</span>'); parts.push(st.b ? `<button type="button" data-go="sa">${esc(st.sa)}</button>` : `<span class="here">${esc(st.sa)}</span>`); }
+  if (st.b){ parts.push('<span class="sep">/</span>'); parts.push(`<span class="here">${esc(B[st.b].n)}</span>`); }
+  $('#crumbs').innerHTML = parts.join('');
+  $('#crumbs').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    if (b.dataset.go === 'city'){ st.sa = null; st.b = null; } else st.b = null;
+    st.more = false; render(); window.scrollTo({top: $('#crumbs').offsetTop - 16, behavior: 'smooth'});
   }));
 }
 
-function renderKpis(rows){
-  const inc = rows.reduce((s,d) => s + Math.max(0, amt(d)), 0);
-  const dec = rows.reduce((s,d) => s + Math.min(0, amt(d)), 0);
-  const nInc = rows.filter(d => amt(d) > 0).length, nDec = rows.filter(d => amt(d) < 0).length;
-  const f = rows.reduce((s,d) => s + fte(d), 0);
-  const nSi = rows.filter(d => d.si).length, nNo = rows.length - nSi;
-  const siAmt = rows.filter(d => d.si).reduce((s,d) => s + amt(d), 0);
-  const pct = rows.length ? Math.round(nSi / rows.length * 100) : 0;
-  $('#kpis').innerHTML = `
-    <div class="kpi"><div class="k">Decision packages</div><div class="v">${rows.length}</div><div class="s">${new Set(rows.map(d=>d.b)).size} bureaus</div></div>
-    <div class="kpi"><div class="k">Increases</div><div class="v pos" title="${full(inc)}">${money(inc)}</div><div class="s">${nInc} package${nInc===1?'':'s'}</div></div>
-    <div class="kpi"><div class="k">Decreases</div><div class="v neg" title="${full(dec)}">${money(dec)}</div><div class="s">${nDec} package${nDec===1?'':'s'}</div></div>
-    <div class="kpi"><div class="k">Net FTE change</div><div class="v">${fteFmt(f)}</div><div class="s">positions, ${FUND_NAME[st.fund]}</div></div>
-    <div class="kpi"><div class="k">With service impact <span class="pill mk">Mock</span></div><div class="v">${pct}%</div>
-      <div class="split" role="img" aria-label="${nSi} with service impact, ${nNo} without">${rows.length ? `<span class="a" style="flex:${nSi}"></span><span class="b" style="flex:${nNo}"></span>` : ''}</div>
-      <div class="s">${nSi} impact · ${nNo} no impact · ${money(siAmt)} net</div></div>`;
+function renderGroups(rows, all){
+  const box = $('#groups');
+  if (st.b){ $('#h2').textContent = B[st.b].n; $('#sub').textContent = `${st.sa}. Every program offer in the bureau's adopted budget. Select one to see its description and the requests that change it.`; box.innerHTML = ''; return; }
+  const key = st.sa ? 'b' : 'sa';
+  const m = new Map();
+  all.forEach(r => { const k = r.p[key]; if (!m.has(k)) m.set(k, {k, a:0, c:0, n:0}); m.get(k).a += r.a; });
+  rows.forEach(r => { const g = m.get(r.p[key]); g.c += r.chg; if (r.reqs.length) g.n++; });
+  let gs = [...m.values()].filter(g => g.n || !(st.si !== 'all' || st.tags.size || st.q.trim()));
+  gs = st.sa ? gs.sort((a,b) => b.a - a.a) : gs.sort((a,b) => SA_ORDER.indexOf(a.k) - SA_ORDER.indexOf(b.k));
+  $('#h2').textContent = st.sa ? st.sa : 'Service areas';
+  $('#sub').textContent = st.sa ? 'Select a bureau to see each of its programs.' : 'Select a service area to see its bureaus.';
+  if (!gs.length){ box.innerHTML = `<div class="empty">No requests match these filters. <button type="button" id="reset">Clear filters</button></div>`; $('#reset').onclick = resetFilters; return; }
+  const max = Math.max(...gs.map(g => Math.abs(g.c)));
+  box.innerHTML = `<div class="cols" aria-hidden="true"><span>${st.sa ? 'Bureau' : 'Service area'}</span><span>Adopted</span><span>Proposed</span><span>Change</span></div>` +
+    gs.map(g => `<button type="button" class="row${g.c ? '' : ' unchanged'}" data-k="${esc(g.k)}">
+      <span class="nm"><span class="t">${esc(st.sa ? B[g.k].n : g.k)}</span><span class="s">${g.n} program${g.n===1?'':'s'} changed</span><span class="s2 num">${money(g.a)} adopted</span></span>
+      <span class="n a num">${money(g.a)}</span><span class="n num">${money(g.a + g.c)}</span>${chgCell(g.c, g.a, max)}</button>`).join('');
+  box.querySelectorAll('.row').forEach(b => b.addEventListener('click', () => {
+    if (st.sa) st.b = b.dataset.k; else st.sa = b.dataset.k;
+    st.more = false; render(); window.scrollTo({top: $('#crumbs').offsetTop - 16, behavior: 'smooth'});
+  }));
 }
 
-function renderDiverging(){
-  const base = filtered({scope:true});
-  let groups, title, onPick, sub;
-  if (!st.sa){
-    title = 'Net change by service area'; sub = 'Select a service area to see its bureaus.';
-    const m = new Map(); base.forEach(d => { const g = m.get(d.sa) || {k:d.sa, v:0, n:0}; g.v += amt(d); g.n++; m.set(d.sa, g); });
-    groups = [...m.values()].sort((a,b) => SA_ORDER.indexOf(a.k) - SA_ORDER.indexOf(b.k));
-    onPick = g => { st.sa = g.k; };
-  } else if (!st.b){
-    title = `Net change by bureau`; sub = `${st.sa}. Select a bureau to see its decision packages.`;
-    const m = new Map(); base.filter(d => d.sa === st.sa).forEach(d => { const g = m.get(d.b) || {k:d.b, lbl:d.bn, v:0, n:0}; g.v += amt(d); g.n++; m.set(d.b, g); });
-    groups = [...m.values()].sort((a,b) => b.v - a.v);
-    onPick = g => { st.b = g.k; };
+function progRow(r, max, showBureau){
+  const p = r.p, open = st.open.has(p.k);
+  const nSi = r.reqs.filter(x => DPS[x.id].si).length;
+  const reqTxt = r.reqs.length ? `${r.reqs.length} request${r.reqs.length===1?'':'s'}${st.si === 'all' && nSi ? `, ${nSi} with service impact` : ''}` : 'No requests';
+  const sub = [showBureau ? p.bn : '', p.new ? 'not in the adopted budget' : '', reqTxt].filter(Boolean).join(', ').replace(/^./, c => c.toUpperCase());
+  return `<div class="prog${open ? ' open' : ''}" id="p-${esc(p.k.replace('|','-'))}">
+    <button type="button" class="row${r.chg || r.reqs.length ? '' : ' unchanged'}" data-k="${esc(p.k)}" aria-expanded="${open}">
+      <span class="nm"><span class="t">${esc(p.n)}</span>
+        <span class="s">${esc(sub)}</span><span class="s2 num">${money(r.a)} adopted, ${money(r.a + r.chg)} proposed</span></span>
+      <span class="n a num">${money(r.a)}</span><span class="n num">${money(r.a + r.chg)}</span>${chgCell(r.chg, r.a, max)}
+    </button>${open ? progDetail(r) : ''}</div>`;
+}
+
+function progDetail(r){
+  const p = r.p;
+  const long = p.d.length > 520 || p.s.length > 240;
+  const desc = p.d ? `<div class="desc clamp" id="d-${esc(p.k)}">${esc(p.d)}</div>`
+                   : `<div class="desc none">${p.new ? 'This program offer is not in the adopted budget book.' : 'The adopted budget book has no description for this program offer.'}</div>`;
+  const maxR = Math.max(1, ...r.reqs.map(x => Math.abs(x.amt)));
+  const others = (BY_PROG[p.k] || []).filter(x => !r.reqs.some(y => y.id === x.id) && fundAmt(x));
+  const fteLine = (r.fteA || r.fteC) ? `<div><b class="num">${fteF(r.fteA)} to ${fteF(r.fteA + r.fteC)} FTE</b>Positions, adopted to proposed</div>` : '';
+  return `<div class="pd"><div class="pd-grid">
+    <div>${desc}${p.s ? `<p class="services clamp" id="s-${esc(p.k)}"><b>Services.</b> ${esc(p.s)}</p>` : ''}${long ? `<button type="button" class="readmore" data-rm="${esc(p.k)}">Read full description</button>` : ''}
+      ${fteLine ? `<div class="facts">${fteLine}</div>` : ''}</div>
+    <div class="ledger">
+      <div class="lh">How the requests change this program${st.fund === 'gf' ? ' (General Fund)' : st.fund === 'ngf' ? ' (other funds)' : ''}</div>
+      <div class="lr base"><span class="lab">Adopted budget</span><span></span><span class="amt num">${full(r.a)}</span></div>
+      ${r.reqs.map(x => { const d = DPS[x.id]; return `<button type="button" class="lr" data-dp="${d.id}">
+          <span class="lab">${marker(d.si)}<span><span class="lt">${esc(d.name)}</span><span class="lm">DP ${d.id}, ${esc(d.tp)}${x.fte ? `, ${fteS(x.fte)} FTE` : ''}</span></span></span>
+          ${bar(x.amt, maxR)}<span class="amt num ${cls(x.amt)}">${full(x.amt, true)}</span></button>`; }).join('')}
+      ${others.length ? `<div class="lr other"><span class="lab">${others.length} other request${others.length===1?'':'s'} outside these filters, ${money(others.reduce((s,x)=>s+fundAmt(x),0), true)}</span><span></span><span></span></div>` : ''}
+      <div class="lr total"><span class="lab">Proposed budget</span><span></span><span class="amt num">${full(r.a + r.chg)}${r.chg && r.a ? `<span class="pct">${pct(r.chg, r.a)}</span>` : ''}</span></div>
+    </div></div></div>`;
+}
+
+function renderPrograms(rows){
+  const box = $('#progs');
+  let list, title, sub;
+  if (st.b){
+    list = rows; title = 'Programs';
+    sub = '';
   } else {
-    title = 'Net change by decision package'; sub = `${B[st.b].n}. Select a package to open it in the table below.`;
-    groups = base.filter(d => d.b === st.b).map(d => ({k:d.id, lbl:d.name, sm:`DP ${d.id} · ${d.tp}`, v:amt(d), n:1, dp:d})).sort((a,b) => b.v - a.v);
-    onPick = g => { st.open.add(g.k); setTimeout(() => { const r = document.getElementById('dp-'+g.k); if (r) r.scrollIntoView({behavior:'smooth', block:'center'}); }, 30); };
+    list = rows.filter(r => r.reqs.length).sort((a,b) => Math.abs(b.chg) - Math.abs(a.chg));
+    title = st.sa ? `Programs changed in ${st.sa}` : 'Programs with the largest changes';
+    sub = 'Select a program to see its description and the requests that change it.';
   }
-  $('#dvTitle').textContent = title; $('#dvSub').textContent = sub;
-  const box = $('#dv');
-  if (!groups.length){ box.innerHTML = `<div class="empty">No decision packages match these filters.</div>`; $('#dvMore').hidden = true; return; }
-  const LIMIT = 15, shown = st.dvAll ? groups : groups.slice(0, LIMIT);
-  const mx = Math.max(0, ...groups.map(g => g.v)), mn = Math.min(0, ...groups.map(g => g.v));
-  const span = (mx - mn) || 1, z = (-mn / span) * 100;
-  box.innerHTML = '';
-  shown.forEach(g => {
-    const b = document.createElement('button'); b.type = 'button'; b.className = 'dvrow';
-    const w = Math.abs(g.v) / span * 100, left = g.v >= 0 ? z : z - w;
-    b.innerHTML = `<span class="lb">${esc(g.lbl || g.k)}${g.sm ? `<small>${esc(g.sm)}</small>` : `<small>${g.n} package${g.n===1?'':'s'}</small>`}</span>
-      <span class="tr"><span class="zero" style="left:${z}%"></span>${g.v ? `<span class="bar ${g.v >= 0 ? 'up':'dn'}" style="left:${left}%;width:${w}%"></span>` : ''}</span>
-      <span class="vl">${money(g.v)}</span>`;
-    b.setAttribute('aria-label', `${g.lbl || g.k}: ${money(g.v)} net, ${g.n} packages`);
-    b.addEventListener('click', () => { hideTip(); onPick(g); st.dvAll = false; st.tbAll = false; render(); });
-    b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(g.lbl || g.k)}</div><div class="big">${full(g.v)}</div><div class="s">${g.dp ? `${esc(g.dp.tp)} · ${fteFmt(fte(g.dp))} FTE` : `${g.n} decision package${g.n===1?'':'s'}`}</div>`));
-    b.addEventListener('mouseleave', hideTip);
-    box.appendChild(b);
-  });
-  const more = $('#dvMore');
-  more.hidden = groups.length <= LIMIT;
-  more.textContent = st.dvAll ? 'Show top 15' : `Show all ${groups.length}`;
-  more.onclick = () => { st.dvAll = !st.dvAll; renderDiverging(); };
+  $('#ph2').textContent = title; $('#ph2').hidden = !!st.b; $('#psub').hidden = !!st.b; $('#psub').textContent = sub;
+  $('#progSection').style.marginTop = st.b ? '8px' : '';
+  if (!list.length){ box.innerHTML = `<div class="empty">No programs match these filters. <button type="button" id="reset2">Clear filters</button></div>`; $('#reset2').onclick = resetFilters; return; }
+  const max = Math.max(1, ...list.map(r => Math.abs(r.chg)));
+  const head = `<div class="cols" aria-hidden="true"><span>Program</span><span>Adopted</span><span>Proposed</span><span>Change</span></div>`;
+  if (st.b){
+    // group by parent program, largest adopted first
+    const g = new Map(); list.forEach(r => { const k = r.p.pn; (g.get(k) || g.set(k, []).get(k)).push(r); });
+    const groups = [...g.entries()].map(([k, rs]) => ({k, rs: rs.sort((a,b) => (b.reqs.length>0) - (a.reqs.length>0) || Math.abs(b.chg) - Math.abs(a.chg) || b.a - a.a), a: rs.reduce((s,r)=>s+r.a,0), c: rs.reduce((s,r)=>s+r.chg,0)}))
+      .sort((a,b) => b.a - a.a);
+    box.innerHTML = head + groups.map(gr => `<div class="grp"><span style="font:inherit;color:var(--ink)">${esc(gr.k)}</span><span class="num">${money(gr.a)} adopted${gr.c ? `, <span class="${cls(gr.c)}">${money(gr.c, true)}</span>` : ''}</span></div>` + gr.rs.map(r => progRow(r, max, false)).join('')).join('');
+  } else {
+    const LIM = 15, shown = st.more ? list : list.slice(0, LIM);
+    box.innerHTML = head + shown.map(r => progRow(r, max, true)).join('') + (list.length > LIM ? `<button type="button" class="more" id="more">${st.more ? 'Show fewer' : `Show all ${list.length} programs`}</button>` : '');
+    const mb = $('#more'); if (mb) mb.addEventListener('click', () => { st.more = !st.more; render(); });
+  }
+  box.querySelectorAll('.prog > .row').forEach(b => b.addEventListener('click', () => { const k = b.dataset.k; st.open.has(k) ? st.open.delete(k) : st.open.add(k); render(); }));
+  box.querySelectorAll('[data-dp]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); openDP(+b.dataset.dp, b); }));
+  box.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+    const els = ['d-','s-'].map(x => document.getElementById(x + b.dataset.rm)).filter(Boolean);
+    const clamp = !els[0].classList.contains('clamp'); els.forEach(e => e.classList.toggle('clamp', clamp));
+    b.textContent = clamp ? 'Read full description' : 'Show less'; }));
 }
 
-function renderTypes(){
-  const base = filtered({types:true});
-  const agg = t => { const r = base.filter(d => d.tp === t); return {n:r.length, v:r.reduce((s,d)=>s+amt(d),0)}; };
-  const all = [...SI_TYPES, ...NO_TYPES].map(t => ({t, ...agg(t)}));
-  const mxN = Math.max(1, ...all.map(a => a.n));
-  const block = (title, list, color) => {
-    const sec = document.createElement('div');
-    sec.innerHTML = `<h3><span class="sw" style="background:${color}"></span>${title}</h3>`;
-    list.forEach(t => {
-      const a = all.find(x => x.t === t);
-      const off = (st.si === 'y' && !SI_TYPES.includes(t)) || (st.si === 'n' && SI_TYPES.includes(t));
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'trow' + ((st.types.size && !st.types.has(t)) || off ? ' dim' : '');
-      b.setAttribute('aria-pressed', st.types.has(t)); b.disabled = off;
-      b.innerHTML = `<span class="lb">${esc(t)}</span><span class="tr"><span class="bar" style="display:block;width:${a.n/mxN*100}%;background:${color}"></span></span><span class="ct">${a.n}</span><span class="vl">${a.n ? money(a.v) : '—'}</span>`;
-      b.setAttribute('aria-label', `${t}: ${a.n} packages, ${money(a.v)} net`);
-      b.addEventListener('click', () => { hideTip(); toggleType(t); });
-      b.addEventListener('mousemove', e => showTip(e, `<div class="t">${esc(t)}</div><div class="big">${full(a.v)}</div><div class="s">${a.n} decision package${a.n===1?'':'s'} · net requirements</div>`));
-      b.addEventListener('mouseleave', hideTip);
-      sec.appendChild(b);
-    });
-    return sec;
-  };
-  const tl = $('#tl'); tl.innerHTML = '';
-  tl.appendChild(block('Service impact', SI_TYPES, 'var(--si)'));
-  tl.appendChild(block('No service impact', NO_TYPES, 'var(--nosi)'));
+function resetFilters(){
+  st.si = 'all'; st.tags.clear(); st.q = ''; $('#q').value = '';
+  $('#segSi').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x.dataset.v === 'all'));
+  render();
 }
 
-const MO_ORDER = {0:['Beginning Fund Balance','Taxes','Licenses & Permits','Charges for Services','Intergovernmental','Bond & Note Proceeds','Miscellaneous','General Fund Discretionary','General Fund Overhead','Fund Transfers - Revenue','Interagency Revenue','Miscellaneous Fund Allocation'],
+/* ---------- decision package panel ---------- */
+const MO = {0:['Beginning Fund Balance','Taxes','Licenses & Permits','Charges for Services','Intergovernmental','Bond & Note Proceeds','Miscellaneous','General Fund Discretionary','General Fund Overhead','Fund Transfers - Revenue','Interagency Revenue','Miscellaneous Fund Allocation'],
   1:['Personnel','External Materials and Services','Internal Materials and Services','Capital Outlay','Debt Service','Fund Transfers - Expense','Contingency','Reserved for Future Expenditure','Debt Service Reserves','Ending Fund Balance']};
 const isGF = f => /\(100000\)$/.test(f);
-const cell = v => v ? `<td class="num ${v<0?'neg':''}">${full(v)}</td>` : `<td class="num zero">—</td>`;
-const tcell = v => `<td class="num ${v<0?'neg':''}">${full(v)}</td>`;
+const td = v => v ? `<td class="num">${full(v)}</td>` : `<td class="z">—</td>`;
+const tdT = v => `<td class="num">${full(v)}</td>`;
 
-// Resources vs requirements by fund, so the reader can see each fund balance
 function balanceTable(d){
-  const vol = {};
-  d.ln.forEach(([a,mo,f,v]) => { vol[f] = (vol[f]||0) + Math.abs(v); });
+  const vol = {}; d.ln.forEach(([a,mo,f,v]) => vol[f] = (vol[f]||0) + Math.abs(v));
   let funds = Object.keys(vol).sort((x,y) => (isGF(y)-isGF(x)) || vol[y]-vol[x]);
-  const MAXF = 3, other = funds.length > MAXF + 1 ? funds.slice(MAXF) : [];
+  const MAXF = 2, other = funds.length > MAXF + 1 ? funds.slice(MAXF) : [];
   if (other.length) funds = funds.slice(0, MAXF);
-  const col = f => other.includes(f) ? '__other' : f;
-  const cols = [...funds, ...(other.length ? ['__other'] : [])];
-  const showTotal = cols.length > 1;
-  const sum = {}; // sum[a][mo][col]
-  d.ln.forEach(([a,mo,f,v]) => { ((sum[a] ??= {})[mo] ??= {}); sum[a][mo][col(f)] = (sum[a][mo][col(f)]||0) + v; });
-  const tot = a => { const t = {}; Object.values(sum[a]||{}).forEach(r => Object.entries(r).forEach(([c,v]) => t[c] = (t[c]||0)+v)); return t; };
-  const rowTotal = r => cols.reduce((s,c) => s + (r[c]||0), 0);
-  const body = a => {
-    const mos = Object.keys(sum[a]||{}).sort((x,y) => MO_ORDER[a].indexOf(x) - MO_ORDER[a].indexOf(y));
-    if (!mos.length) return `<tr><td class="ind">None</td>${cols.map(()=>'<td class="num zero">—</td>').join('')}${showTotal?'<td class="num zero">—</td>':''}</tr>`;
-    return mos.map(mo => `<tr><td class="ind">${esc(mo)}</td>${cols.map(c => cell(sum[a][mo][c]||0)).join('')}${showTotal ? cell(rowTotal(sum[a][mo])) : ''}</tr>`).join('');
-  };
-  const tr = tot(0), te = tot(1);
-  const diff = {}; cols.forEach(c => diff[c] = (tr[c]||0) - (te[c]||0));
-  const diffCell = v => Math.abs(v) < 1 ? `<td class="num ok">Balanced</td>` : `<td class="num off">${full(v)}</td>`;
-  const tdiff = rowTotal(tr) - rowTotal(te);
-  const head = cols.map(c => `<th class="num">${c === '__other' ? `Other funds (${other.length})` : esc(c)}</th>`).join('');
-  return `<div class="bal-wrap"><table class="bal">
-    <thead><tr><th></th>${head}${showTotal ? '<th class="num">Total</th>' : ''}</tr></thead>
-    <tbody>
-      <tr class="grp"><td colspan="${cols.length + 1 + showTotal}">Resources</td></tr>${body(0)}
-      <tr class="sub"><td>Total resources</td>${cols.map(c => tcell(tr[c]||0)).join('')}${showTotal ? tcell(rowTotal(tr)) : ''}</tr>
-      <tr class="grp"><td colspan="${cols.length + 1 + showTotal}">Requirements</td></tr>${body(1)}
-      <tr class="sub"><td>Total requirements</td>${cols.map(c => tcell(te[c]||0)).join('')}${showTotal ? tcell(rowTotal(te)) : ''}</tr>
-      <tr class="net"><td>Resources less requirements</td>${cols.map(c => diffCell(diff[c])).join('')}${showTotal ? diffCell(tdiff) : ''}</tr>
-    </tbody></table></div>
-    ${other.length ? `<p class="note">Other funds: ${other.map(esc).join('; ')}.</p>` : ''}`;
+  const col = f => other.includes(f) ? '__o' : f;
+  const cols = [...funds, ...(other.length ? ['__o'] : [])], tot = cols.length > 1;
+  const S = {}; d.ln.forEach(([a,mo,f,v]) => { ((S[a] ??= {})[mo] ??= {}); S[a][mo][col(f)] = (S[a][mo][col(f)]||0) + v; });
+  const T = a => { const t = {}; Object.values(S[a]||{}).forEach(r => Object.entries(r).forEach(([c,v]) => t[c] = (t[c]||0)+v)); return t; };
+  const rt = r => cols.reduce((s,c) => s + (r[c]||0), 0);
+  const body = a => { const mos = Object.keys(S[a]||{}).sort((x,y) => MO[a].indexOf(x) - MO[a].indexOf(y));
+    return mos.length ? mos.map(mo => `<tr><td>${esc(mo)}</td>${cols.map(c => td(S[a][mo][c]||0)).join('')}${tot ? td(rt(S[a][mo])) : ''}</tr>`).join('') : `<tr><td>None</td>${cols.map(() => '<td class="z">—</td>').join('')}${tot ? '<td class="z">—</td>' : ''}</tr>`; };
+  const R = T(0), E = T(1), span = cols.length + 1 + (tot ? 1 : 0);
+  const diff = v => Math.abs(v) < 1 ? `<td class="ok">Balanced</td>` : `<td class="off num">${full(v)}</td>`;
+  return `<div class="tw"><table><thead><tr><th>Fund</th>${cols.map(c => `<th>${c === '__o' ? `${other.length} other funds` : esc(c)}</th>`).join('')}${tot ? '<th>Total</th>' : ''}</tr></thead><tbody>
+    <tr class="g"><td colspan="${span}">Resources</td></tr>${body(0)}
+    <tr class="st"><td>Total resources</td>${cols.map(c => tdT(R[c]||0)).join('')}${tot ? tdT(rt(R)) : ''}</tr>
+    <tr class="g"><td colspan="${span}">Requirements</td></tr>${body(1)}
+    <tr class="st"><td>Total requirements</td>${cols.map(c => tdT(E[c]||0)).join('')}${tot ? tdT(rt(E)) : ''}</tr>
+    <tr class="nt"><td>Resources less requirements</td>${cols.map(c => diff((R[c]||0)-(E[c]||0))).join('')}${tot ? diff(rt(R)-rt(E)) : ''}</tr>
+  </tbody></table></div>${other.length ? `<p class="tnote">Other funds: ${other.map(esc).join('; ')}.</p>` : ''}`;
 }
 
 function positionsTable(d){
   if (!d.pos.length) return '';
-  const multiFund = new Set(d.pos.map(p => p[2])).size > 1;
-  const t = d.pos.reduce((a,p) => { a.f += p[4]; a.s += p[5]; a.b += p[6]; a.t += p[7]; return a; }, {f:0,s:0,b:0,t:0});
-  const notes = d.pos.some(p => p[8]);
-  return `<h4>Positions (${d.pos.length})</h4>
-    <div class="bal-wrap"><table class="bal pos">
-      <thead><tr><th>Position</th><th>PCN</th><th>Fund center</th>${multiFund ? '<th>Fund</th>' : ''}<th class="num">FTE</th><th class="num">Salary</th><th class="num">Benefits &amp; taxes</th><th class="num">Total</th></tr></thead>
-      <tbody>${d.pos.map(p => `<tr><td>${esc(p[1])}${p[8] ? `<div class="pj">${esc(p[8])}</div>` : ''}</td><td class="mono">${esc(p[0])}</td><td>${esc(p[3])}</td>${multiFund ? `<td>${esc(p[2])}</td>` : ''}
-        <td class="num ${p[4]<0?'neg':''}">${fteFmt(p[4])}</td>${cell(p[5])}${cell(p[6])}${cell(p[7])}</tr>`).join('')}
-        <tr class="sub"><td colspan="${multiFund ? 4 : 3}">Total positions</td><td class="num">${fteFmt(t.f)}</td>${cell(t.s)}${cell(t.b)}${cell(t.t)}</tr>
-      </tbody></table></div>
-    ${!multiFund ? `<p class="note">Fund: ${esc(d.pos[0][2])}.` : '<p class="note">'} Position costs come from the personnel export and are included in Personnel requirements above${d.pf ? `, along with ${full(d.pf)} of personnel budget entered directly on the package` : ''}.</p>`;
+  const t = d.pos.reduce((a,p) => (a.f += p[4], a.s += p[5], a.b += p[6], a.t += p[7], a), {f:0,s:0,b:0,t:0});
+  return `<h4>Positions</h4><div class="tw"><table><thead><tr><th>Position</th><th>FTE</th><th>Salary</th><th>Benefits</th><th>Total</th></tr></thead><tbody>
+    ${d.pos.map(p => `<tr><td>${esc(p[1])}<span class="pj">${esc(p[0])}${p[9] ? `, ${esc(p[9])}` : ''}</span></td><td class="num">${fteS(p[4])}</td>${td(p[5])}${td(p[6])}${td(p[7])}</tr>`).join('')}
+    <tr class="st"><td>${d.pos.length} position${d.pos.length===1?'':'s'}</td><td class="num">${fteS(t.f)}</td>${tdT(t.s)}${tdT(t.b)}${tdT(t.t)}</tr></tbody></table></div>
+    <p class="tnote">Position costs come from the personnel export and are included in Personnel above.</p>`;
 }
 
-const SM = matchMedia('(max-width:700px)');
-const ncols = () => SM.matches ? 3 : 7;
-SM.addEventListener('change', () => renderTable(filtered()));
-function renderTable(rows){
-  const k = st.sort.k, dir = st.sort.dir;
-  const key = {name:d=>d.name.toLowerCase(), bur:d=>d.bn, rt:d=>d.rt, tp:d=>(d.si?'0':'1')+d.tp, fte:d=>fte(d), amt:d=>amt(d)}[k];
-  const sorted = [...rows].sort((a,b) => { const x = key(a), y = key(b); return (x < y ? -1 : x > y ? 1 : 0) * dir; });
-  const LIMIT = 25, shown = st.tbAll ? sorted : sorted.slice(0, LIMIT);
-  document.querySelectorAll('th button').forEach(b => {
-    const on = b.dataset.k === k; b.parentElement.setAttribute('aria-sort', on ? (dir > 0 ? 'ascending' : 'descending') : 'none');
-    b.dataset.arrow = on ? (dir > 0 ? ' ↑' : ' ↓') : '';
-  });
-  const tb = $('#tb');
-  if (!rows.length){ tb.innerHTML = `<tr><td colspan="${ncols()}" class="empty">No decision packages match these filters.</td></tr>`; }
-  else tb.innerHTML = shown.map(d => {
-    const v = amt(d), open = st.open.has(d.id);
-    const main = `<tr class="dp${open?' open':''}" id="dp-${d.id}" data-id="${d.id}">
-      <td><button type="button" class="exp" aria-expanded="${open}" aria-label="Details for DP ${d.id}">${open ? '▾' : '▸'}</button></td>
-      <td class="nm"><div class="t">${esc(d.name)}</div><div class="id">DP ${d.id}<span class="show-sm"> · ${esc(d.b)}</span>${d.pos.length ? ` · ${d.pos.length} position${d.pos.length===1?'':'s'}` : ''}</div><div class="show-sm tag" style="margin-top:3px"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</div></td>
-      <td class="hide-sm">${esc(d.bn)}</td>
-      <td class="hide-sm">${esc(d.rt)}</td>
-      <td class="hide-sm"><span class="tag"><span class="dot" style="background:${tcolor(d.tp)}"></span>${esc(d.tp)}</span><br><span class="tag"><small>${d.si ? 'Service impact' : 'No service impact'}</small></span></td>
-      <td class="num hide-sm">${fte(d) ? fteFmt(fte(d)) : '—'}</td>
-      <td class="num ${v>0?'pos':v<0?'neg':''}" title="${full(v)}">${money(v)}</td></tr>`;
-    if (!open) return main;
-    return main + `<tr class="detail"><td colspan="${ncols()}">
-      <div class="meta"><span><b>Bureau</b>${esc(d.bn)}</span><span><b>Service area</b>${esc(d.sa)}</span><span><b>Request type</b>${esc(d.rt)}</span><span><b>Package type</b>${d.si ? 'Service impact' : 'No service impact'} · ${esc(d.tp)} <span class="pill mk">Mock</span></span><span><b>FTE</b>${fteFmt(d.fte)}</span></div>
-      <div class="dgrid">
-        <div><h4>Package description</h4><p>${esc(d.d || 'No description provided.')}</p></div>
-        <div><h4>Service impacts</h4><p>${esc(d.sit || 'None provided.')}</p>
-        ${d.eq ? `<h4>Equity outcomes and impact tracking</h4><p>${esc(d.eq)}</p>` : ''}</div>
-      </div>
-      <h4>Resources and requirements by fund</h4>
-      ${balanceTable(d)}
-      ${positionsTable(d)}
-    </td></tr>`;
-  }).join('');
-  tb.querySelectorAll('tr.dp').forEach(r => r.addEventListener('click', () => {
-    const id = +r.dataset.id; st.open.has(id) ? st.open.delete(id) : st.open.add(id); renderTable(filtered());
-  }));
-  $('#tbTitle').textContent = `Decision packages (${rows.length})`;
-  $('#tbCount').textContent = rows.length ? `Showing ${shown.length} of ${rows.length}` : '';
-  const more = $('#tbMore'); more.hidden = rows.length <= LIMIT;
-  more.textContent = st.tbAll ? `Show first ${LIMIT}` : `Show all ${rows.length}`;
-  more.onclick = () => { st.tbAll = !st.tbAll; renderTable(filtered()); };
+let lastFocus = null;
+function openDP(id, from){
+  const d = DPS[id]; lastFocus = from || document.activeElement;
+  const progs = d.pl.map(([k, v, g, f]) => ({p: PK[k], v, g, f})).filter(x => x.v || x.f);
+  $('#drawer').innerHTML = `
+    <div class="dhead"><span class="did">Decision package ${d.id}</span><button type="button" class="close" id="dClose">Close</button></div>
+    <h3 id="dTitle">${esc(d.name)}</h3>
+    <dl class="dmeta">
+      <dt>Bureau</dt><dd>${esc(B[d.b].n)}</dd>
+      <dt>Impact</dt><dd>${marker(d.si)}${d.si ? 'Service impact' : 'No service impact'}, ${esc(d.tp)} <span class="sample">sample tag</span></dd>
+      <dt>Request type</dt><dd>${esc(d.rt)}</dd>
+      <dt>Net change</dt><dd class="num ${cls(d.e)}">${full(d.e, true)}${d.fte ? `, ${fteS(d.fte)} FTE` : ''}</dd>
+    </dl>
+    <h4>Description</h4><p class="txt${d.d ? '' : ' none'}">${esc(d.d || 'No description provided.')}</p>
+    <h4>Service impacts</h4><p class="txt${d.sit ? '' : ' none'}">${esc(d.sit || 'None provided.')}</p>
+    ${d.eq ? `<h4>Equity outcomes</h4><p class="txt">${esc(d.eq)}</p>` : ''}
+    <h4>Programs this request changes</h4>
+    <div class="plist">${progs.map(x => `<button type="button" class="pl" data-k="${esc(x.p.k)}"><span>${esc(x.p.n)}<small>${esc(x.p.bn)}${x.f ? `, ${fteS(x.f)} FTE` : ''}</small></span><span class="amt num ${cls(x.v)}">${full(x.v, true)}</span></button>`).join('')}</div>
+    <h4>Resources and requirements</h4>${balanceTable(d)}
+    ${positionsTable(d)}`;
+  const dr = $('#drawer'), sc = $('#scrim');
+  dr.hidden = false; sc.hidden = false; dr.scrollTop = 0;
+  requestAnimationFrame(() => { dr.classList.add('on'); sc.classList.add('on'); });
+  document.body.style.overflow = 'hidden';
+  $('#dClose').focus();
+  $('#dClose').onclick = closeDP;
+  dr.querySelectorAll('.pl').forEach(b => b.addEventListener('click', () => goProgram(b.dataset.k)));
 }
-document.querySelectorAll('th button').forEach(b => {
-  b.addEventListener('click', () => {
-    const k = b.dataset.k;
-    st.sort = st.sort.k === k ? {k, dir: -st.sort.dir} : {k, dir: (k === 'amt' || k === 'fte') ? -1 : 1};
-    renderTable(filtered());
-  });
+function closeDP(){
+  const dr = $('#drawer'), sc = $('#scrim');
+  dr.classList.remove('on'); sc.classList.remove('on'); document.body.style.overflow = '';
+  setTimeout(() => { dr.hidden = true; sc.hidden = true; }, 200);
+  if (lastFocus && document.body.contains(lastFocus)) lastFocus.focus();
+}
+function goProgram(k){
+  const p = PK[k]; closeDP();
+  st.sa = p.sa; st.b = p.b; st.open.add(k); st.q = ''; $('#q').value = ''; render();
+  setTimeout(() => { const el = document.getElementById('p-' + k.replace('|','-')); if (el){ el.scrollIntoView({behavior:'smooth', block:'start'}); el.querySelector('.row').focus({preventScroll:true}); } }, 220);
+}
+$('#scrim').addEventListener('click', closeDP);
+document.addEventListener('keydown', e => {
+  if ($('#drawer').hidden) return;
+  if (e.key === 'Escape') closeDP();
+  if (e.key === 'Tab'){ // keep focus in the panel
+    const f = [...$('#drawer').querySelectorAll('button')]; if (!f.length) return;
+    if (e.shiftKey && document.activeElement === f[0]){ e.preventDefault(); f.at(-1).focus(); }
+    else if (!e.shiftKey && document.activeElement === f.at(-1)){ e.preventDefault(); f[0].focus(); }
+  }
 });
-const sortStyle = document.createElement('style');
-sortStyle.textContent = 'th button::after{content:attr(data-arrow)} .show-sm{display:none!important} @media (max-width:700px){.show-sm{display:inline!important} div.show-sm{display:flex!important;white-space:normal} .tbl-wrap{margin:0;padding:0} td,th{padding-left:6px;padding-right:6px}}';
-document.head.appendChild(sortStyle);
 
 render();
 </script>
