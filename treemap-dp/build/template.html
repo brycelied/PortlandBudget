@@ -126,6 +126,17 @@ footer.src b{color:var(--ink)}
 @media (max-width:560px){.seg{flex-wrap:wrap}.controls .ctl{max-width:100%}}
 .controls{flex-direction:column;align-items:stretch;gap:14px}
 .crow{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end}
+/* side panel: same height as the treemap, scrolls inside, expandable */
+aside.panel{max-height:600px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line-strong) transparent}
+@media (max-width:900px){aside.panel{max-height:480px}}
+@media (max-width:480px){aside.panel{max-height:420px}}
+aside.panel.open{max-height:none;overflow:visible}
+aside.panel .scroll{max-height:none;overflow:visible;margin-right:0;padding-right:0}
+.pexp{position:sticky;bottom:-16px;margin:-8px -16px -16px;padding:18px 16px 12px;background:linear-gradient(to bottom, transparent, var(--surface) 45%);display:flex;justify-content:center}
+aside.panel.open .pexp{position:static;background:none;padding-top:4px}
+.pexp button{all:unset;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);border:1px solid var(--line-strong);border-radius:999px;padding:5px 14px;background:var(--surface)}
+.pexp button:hover{border-color:var(--muted)}
+.pexp button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .mocknote{font-size:13px;color:var(--ink-2);margin:-6px 0 0;max-width:110ch}
 .mocknote b{color:var(--ink)}
 .mocknote a{color:var(--ink-2)}
@@ -267,7 +278,7 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
 <script>
 const D = __DATA__;
 const GF = D.fd.findIndex(f => f.startsWith('100 '));
-const st = {fund:'all', measure:'total', by:'program', dp:'all', si:'all', sa:null, bu:null, pg:null, sel:null, full:false, allDP:false};
+const st = {fund:'all', measure:'total', by:'program', dp:'all', si:'all', panel:false, sa:null, bu:null, pg:null, sel:null, full:false, allDP:false};
 const $ = id => document.getElementById(id);
 const tm = $('tm'), tip = $('tip');
 const isDP = r => r.length > 7;
@@ -510,7 +521,22 @@ const absBase = list => list.reduce((s,d) => s + Math.abs(d.v), 0);
 const baseFor = (list, net) => st.dp === 'dp' ? absBase(list) : net;
 
 function renderPanel(V){
-  const p = $('panel'); p.innerHTML = '';
+  const p = $('panel'); p.innerHTML = ''; p.scrollTop = 0;
+  _renderPanel(V, p);
+  // expand control, only when the content is taller than the treemap
+  p.classList.toggle('open', st.panel);
+  requestAnimationFrame(() => {
+    const over = st.panel || p.scrollHeight > p.clientHeight + 4;
+    if (!over) return;
+    const bar = document.createElement('div'); bar.className = 'pexp';
+    const b = document.createElement('button'); b.type = 'button';
+    b.textContent = st.panel ? 'Collapse panel' : 'Expand panel';
+    b.setAttribute('aria-expanded', String(st.panel));
+    b.onclick = () => { st.panel = !st.panel; renderPanel(view()); if (!st.panel) $('panel').scrollIntoView({block:'nearest'}); };
+    bar.appendChild(b); p.appendChild(bar);
+  });
+}
+function _renderPanel(V, p){
   const head = document.createElement('div');
   const sec = title => { const s = document.createElement('section'); s.innerHTML = `<h3>${esc(title)}</h3>`; return s; };
   const ul = () => { const u = document.createElement('ul'); u.className = 'ledger'; return u; };
