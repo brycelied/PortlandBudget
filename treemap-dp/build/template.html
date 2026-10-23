@@ -138,6 +138,21 @@ aside.panel.open .pexp{position:static;background:none;padding-top:4px}
 .pexp button:hover{border-color:var(--muted)}
 .pexp button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .tmview{display:flex;flex-direction:column;gap:18px}
+/* commitment item drill-down */
+.cx{all:unset;cursor:pointer;display:inline-flex;gap:6px;align-items:baseline}
+.cx:hover{text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+.cx:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+.cx .car{color:var(--muted);width:9px;flex:none;font-size:11px}
+.cxs{padding-left:15px;display:inline-block}
+tr.ci td{font-size:12.5px;color:var(--ink-2);background:color-mix(in oklab, var(--ink) 2.5%, transparent)}
+tr.ci td:first-child{padding-left:15px!important}
+tr.ci td.up,tr.ci td.down{font-size:12.5px}
+.row .n .cx{display:inline-flex}
+ul.cil{list-style:none;margin:0 0 6px 18px;padding:0;border-left:1px solid var(--line-strong)}
+ul.cil li{display:flex;justify-content:space-between;gap:10px;padding:4px 2px 4px 10px;font-size:12.5px;color:var(--ink-2);border-top:1px solid var(--line)}
+ul.cil li:first-child{border-top:0}
+ul.cil .cn{min-width:0;overflow-wrap:anywhere}
+ul.cil .cv{font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--ink)}
 /* program-level DP cards: link to full DP, partial-amount tag */
 .dtop h3 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line-strong)}
 .dtop h3 a:hover{border-bottom-color:var(--ink)}
@@ -621,7 +636,7 @@ function _renderPanel(V, p){
     const s = sec(st.dp === 'dp' ? 'Ranked by size of change' : 'Ranked by budget'), u = ul();
     ranked(V.groups).forEach(g => u.appendChild(ledgerRow(g, baseFor(V.groups, V.nodeTotal), () => go(g.k, null))));
     s.appendChild(u); p.appendChild(s);
-    p.appendChild(catSection(V.scope, null));
+    p.appendChild(catSection(V.scope, null, () => true));
     return;
   }
   if (V.level === 'sa'){
@@ -630,7 +645,7 @@ function _renderPanel(V, p){
     const s = sec(st.dp === 'dp' ? 'Ranked by size of change' : 'Ranked by budget'), u = ul(); u.classList.add('scroll');
     ranked(V.items).forEach(d => u.appendChild(ledgerRow(d, baseFor(V.items, V.nodeTotal), () => go(d.sa, d.k))));
     s.appendChild(u); p.appendChild(s);
-    p.appendChild(catSection(V.scope, st.sa));
+    p.appendChild(catSection(V.scope, st.sa, r => D.buSA[r[0]] === st.sa));
     return;
   }
   const isProg = V.level === 'program';
@@ -664,24 +679,41 @@ function _renderPanel(V, p){
     const box = document.createElement('section'); box.className = 'selbox';
     box.innerHTML = `<div><h3>Selected ${unit}</h3><h2 style="font-size:17px">${esc(sel.name)}</h2><p class="sub">${money(sel.v, true, st.dp === 'dp')}${st.dp !== 'dp' ? ' · ' + pct(sel.v, V.nodeTotal) + ' of ' + (isProg ? 'program' : 'bureau') : ''}</p></div>`;
     box.appendChild(crossSec(rs));
-    box.appendChild(catSection(rs, sa));
+    box.appendChild(catSection(rs, sa, r => scopePred()(r) && leafKey(V)(r) === sel.k));
     const clr = document.createElement('button'); clr.className = 'btn'; clr.textContent = 'Clear selection'; clr.style.alignSelf = 'flex-start';
     clr.onclick = () => { st.sel = null; render(); };
     box.appendChild(clr); p.appendChild(box);
   } else {
     if (isProg) p.appendChild(crossSec(V.scope));
-    p.appendChild(catSection(V.scope, sa));
+    p.appendChild(catSection(V.scope, sa, scopePred()));
   }
 }
 
-function catSection(rs, sa){
+const scopePred = () => st.pg !== null ? (r => r[0] === st.bu && r[1] === st.pg) : (r => r[0] === st.bu);
+function catSection(rs, sa, pred){
   const m = sumBy(rs, r => r[3]);
-  const list = D.mo.map((mo, i) => ({name: mo[1], ...(m.get(i) || {v:0, c:0}), sa: sa === null ? 'x' : sa})).filter(d => Math.round(d.v) !== 0);
+  const list = D.mo.map((mo, i) => ({k:i, name: mo[1], ...(m.get(i) || {v:0, c:0}), sa: sa === null ? 'x' : sa})).filter(d => Math.round(d.v) !== 0);
   const s = document.createElement('section'); s.className = 'cats';
   s.innerHTML = '<h3>By spending category</h3>';
   const u = document.createElement('ul'); u.className = 'ledger';
   const b = baseFor(list, total(rs));
-  list.forEach(d => u.appendChild(ledgerRow(d, b)));
+  // commitment items for the same scope and toggles: [mo, ci, amount, from a DP]
+  const ci = pred ? [
+    ...(st.dp !== 'dp' ? D.bci.filter(r => keepRow(r) && pred(r)).map(r => [r[3], r[7], r[6], 0]) : []),
+    ...(st.dp !== 'base' ? D.dr.filter(r => keepRow(r) && siOK(r) && pred(r)).map(r => [r[3], r[8], r[6], 1]) : [])] : [];
+  list.forEach(d => {
+    const li = ledgerRow(d, b);
+    const m2 = new Map(); ci.filter(x => x[0] === d.k).forEach(([,c,v,isd]) => { const o = m2.get(c) || {v:0, c:0}; o.v += v; if (isd) o.c += v; m2.set(c, o); });
+    const items = [...m2].filter(([,o]) => Math.round(o.v) || Math.round(o.c)).sort((x,y) => Math.abs(y[1].v) - Math.abs(x[1].v));
+    if (items.length){
+      const uid = 'c' + (++CXN), row = li.querySelector('.row'), n = row.querySelector('.n');
+      n.innerHTML = cxBtn(uid, n.innerHTML, items.length);
+      const sub = document.createElement('ul'); sub.className = 'cil'; sub.dataset.cp = uid; sub.hidden = true;
+      sub.innerHTML = items.map(([c, o]) => `<li><span class="cn">${esc(D.ci[c])}${st.dp === 'all' && o.c ? `<span class="dpc ${o.c < 0 ? 'down' : 'up'}">DPs ${money(o.c, false, true)}</span>` : ''}</span><span class="cv">${sm(o.v)}</span></li>`).join('');
+      li.appendChild(sub);
+    }
+    u.appendChild(li);
+  });
   if (sa === null) u.querySelectorAll('.row').forEach(r => r.style.setProperty('--c', 'var(--ink-2)'));
   s.appendChild(u); return s;
 }
@@ -727,6 +759,19 @@ function renderNarrative(V){
   box.querySelectorAll('.nlink').forEach(b => b.onclick = () => { st.sel = 'u' + b.dataset.sp; st.full = false; render(); });
 }
 
+/* ---------- commitment items ---------- */
+// rows: base at commitment item level is D.bci [bu,pg,fd,mo,cap,sp,amount,ci]; DP rows carry ci at r[8]
+let CXN = 0;
+const cxBtn = (uid, label, n) => n ? `<button type="button" class="cx" data-cx="${uid}" aria-expanded="false" title="Show ${n} commitment item${n === 1 ? '' : 's'}"><span class="car" aria-hidden="true">▸</span>${label}</button>` : `<span class="cxs">${label}</span>`;
+function groupCI(rows, ciAt){ const m = new Map(); rows.forEach(r => m.set(r[ciAt], (m.get(r[ciAt]) || 0) + r[6])); return m; }
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-cx]'); if (!b) return;
+  const open = b.getAttribute('aria-expanded') !== 'true';
+  b.setAttribute('aria-expanded', String(open));
+  b.querySelector('.car').textContent = open ? '▾' : '▸';
+  document.querySelectorAll(`[data-cp="${b.dataset.cx}"]`).forEach(r => r.hidden = !open);
+});
+
 /* ---------- decision packages at every level ---------- */
 const MOI = D.mo.map((m, i) => i);
 const sumv = rs => rs.reduce((s,r) => s + r[6], 0);
@@ -752,7 +797,7 @@ function renderDPs(V){
   }
   const inScope = r => (st.sa === null || D.buSA[r[0]] === st.sa) && (st.bu === null || r[0] === st.bu) && (st.pg === null || r[1] === st.pg) && (selSp === null || r[5] === selSp);
   const req = D.dr.filter(r => keepRow(r) && siOK(r) && inScope(r));
-  const base = D.rows.filter(r => keepRow(r) && inScope(r));
+  const base = D.bci.filter(r => keepRow(r) && inScope(r));
   const n = nDP(req), tc = sumv(req);
   let h = `<div class="dhead"><h2>Decision packages ${V.level === 'city' ? 'citywide' : 'in ' + esc(where)}</h2>
     <p class="sub">${n} request${n === 1 ? '' : 's'}, ${money(tc, true, true)} in ${filtTxt()}. Impact tags are sample values for this mockup.</p></div>`;
@@ -761,7 +806,7 @@ function renderDPs(V){
   if (V.level === 'program'){
     const subs = programSubs();
     const bySp = (rs, k) => sumv(rs.filter(r => r[5] === k));
-    const progBase = D.rows.filter(r => keepRow(r) && r[0] === st.bu && r[1] === st.pg);
+    const progBase = D.bci.filter(r => keepRow(r) && r[0] === st.bu && r[1] === st.pg);
     const progReq = D.dr.filter(r => keepRow(r) && siOK(r) && r[0] === st.bu && r[1] === st.pg);
     const sumRows = subs.map(k => ({k, b: bySp(progBase, k), c: bySp(progReq, k), n: nDP(progReq.filter(r => r[5] === k))})).filter(x => x.b || x.c).sort((a,b) => b.b - a.b);
     if (selSp === null && sumRows.length) h += summaryTable('Sub-program', sumRows.map(x => ({name: D.sp[x.k], ...x})), D.pg[st.pg]);
@@ -858,7 +903,11 @@ function dpCard(i, mine, baseScope, baseLabel, scopeName, split, programScope){
       <div class="dtext"><p class="clamp" id="dd-${d.id}-${esc(scopeName).replace(/\W+/g,'')}">${esc(desc)}</p>${desc.length > 360 ? `<button type="button" class="nmore" data-more="dd-${d.id}-${esc(scopeName).replace(/\W+/g,'')}">Read more</button>` : ''}
         ${real ? `<p class="dsi"><b>Service impacts.</b> ${esc(d.sit)}</p>` : ''}</div>
       <div class="tw"><table><thead><tr><th>Spending category</th><th>${esc(baseLabel)} adopted</th><th>This request</th><th>Change</th></tr></thead><tbody>
-        ${cats.map(x => `<tr><td>${esc(D.mo[x.m][1])}</td><td>${money(x.b, true)}</td><td class="${cls(x.c)}">${money(x.c, true, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
+        ${cats.map(x => { const uid = 'c' + (++CXN);
+            const reqCI = groupCI(mine.filter(r => r[3] === x.m), 8), baseCI = groupCI(baseScope.filter(r => r[3] === x.m), 7);
+            const items = [...reqCI].filter(([,v]) => v).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
+            return `<tr class="cat"><td>${cxBtn(uid, esc(D.mo[x.m][1]), items.length)}</td><td>${money(x.b, true)}</td><td class="${cls(x.c)}">${money(x.c, true, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>` +
+              items.map(([ci, v]) => { const bv = baseCI.get(ci) || 0; return `<tr class="ci" data-cp="${uid}" hidden><td>${esc(D.ci[ci])}</td><td>${money(bv, true)}</td><td class="${cls(v)}">${money(v, true, true)}</td><td class="z">${chg(v, bv) || '—'}</td></tr>`; }).join(''); }).join('')}
         <tr class="tot"><td>${esc(baseLabel)} total</td><td>${money(tb, true)}</td><td class="${cls(amt)}">${money(amt, true, true)}</td><td>${chg(amt, tb) || '—'}</td></tr>
       </tbody></table>
       ${splitLine}
@@ -916,18 +965,24 @@ const MO_ORDER = {0:['Beginning Fund Balance','Taxes','Licenses & Permits','Char
 const td = v => v ? `<td class="${v < 0 ? 'down' : ''}">${money(v, true)}</td>` : `<td class="z">—</td>`;
 const tdT = v => `<td class="${v < 0 ? 'down' : ''}">${money(v, true)}</td>`;
 function balanceTable(d){
-  const vol = {}; d.ln.forEach(([a,mo,f,v]) => vol[f] = (vol[f]||0) + Math.abs(v));
+  const L = d.lc; // [account, major object, fund, ci, amount]
+  const vol = {}; L.forEach(([a,mo,f,ci,v]) => vol[f] = (vol[f]||0) + Math.abs(v));
   const isGFf = f => /\(100000\)$/.test(f);
   let funds = Object.keys(vol).sort((x,y) => (isGFf(y)-isGFf(x)) || vol[y]-vol[x]);
   const MAXF = 3, other = funds.length > MAXF + 1 ? funds.slice(MAXF) : [];
   if (other.length) funds = funds.slice(0, MAXF);
   const col = f => other.includes(f) ? '__o' : f;
   const cols = [...funds, ...(other.length ? ['__o'] : [])], tot = cols.length > 1;
-  const S = {}; d.ln.forEach(([a,mo,f,v]) => { ((S[a] ??= {})[mo] ??= {}); S[a][mo][col(f)] = (S[a][mo][col(f)]||0) + v; });
+  const S = {}, C = {};
+  L.forEach(([a,mo,f,ci,v]) => { ((S[a] ??= {})[mo] ??= {}); S[a][mo][col(f)] = (S[a][mo][col(f)]||0) + v;
+    (((C[a] ??= {})[mo] ??= {})[ci] ??= {}); C[a][mo][ci][col(f)] = (C[a][mo][ci][col(f)]||0) + v; });
   const T = a => { const t = {}; Object.values(S[a]||{}).forEach(r => Object.entries(r).forEach(([c,v]) => t[c] = (t[c]||0)+v)); return t; };
   const rt = r => cols.reduce((s,c) => s + (r[c]||0), 0);
   const body = a => { const mos = Object.keys(S[a]||{}).sort((x,y) => MO_ORDER[a].indexOf(x) - MO_ORDER[a].indexOf(y));
-    return mos.length ? mos.map(mo => `<tr><td>${esc(mo)}</td>${cols.map(c => td(S[a][mo][c]||0)).join('')}${tot ? td(rt(S[a][mo])) : ''}</tr>`).join('')
+    return mos.length ? mos.map(mo => { const uid = 'c' + (++CXN);
+        const items = Object.entries(C[a][mo]).filter(([,r]) => Math.round(rt(r)) || Object.values(r).some(v => v)).sort((x,y) => Math.abs(rt(y[1])) - Math.abs(rt(x[1])));
+        return `<tr class="cat"><td>${cxBtn(uid, esc(mo), items.length)}</td>${cols.map(c => td(S[a][mo][c]||0)).join('')}${tot ? td(rt(S[a][mo])) : ''}</tr>` +
+          items.map(([ci, r]) => `<tr class="ci" data-cp="${uid}" hidden><td>${esc(D.ci[ci])}</td>${cols.map(c => td(r[c]||0)).join('')}${tot ? td(rt(r)) : ''}</tr>`).join(''); }).join('')
       : `<tr><td>None</td>${cols.map(() => '<td class="z">—</td>').join('')}${tot ? '<td class="z">—</td>' : ''}</tr>`; };
   const Rv = T(0), Ev = T(1), span = cols.length + 1 + (tot ? 1 : 0);
   const diff = v => Math.abs(v) < 1 ? `<td class="z">—</td>` : `<td class="off">${money(v, true)}</td>`;
@@ -950,7 +1005,7 @@ function renderDPPage(i){
   const fteBy = {}; D.dpos.filter(p => p[0] === i).forEach(p => fteBy[p[1]] = (fteBy[p[1]]||0) + p[4]);
   const progs = [...pm.values()].filter(o => o.v).sort((a,b) => Math.abs(b.v) - Math.abs(a.v));
   const tot = progs.reduce((s,o) => s + o.v, 0), totGF = progs.reduce((s,o) => s + o.gf, 0);
-  const cats = D.mo.map((m, k) => ({n: m[1], v: rs.filter(r => r[3] === k).reduce((s,r) => s + r[6], 0), cap: rs.filter(r => r[3] === k && r[4] === 1).reduce((s,r) => s + r[6], 0)})).filter(x => x.v);
+  const cats = D.mo.map((m, k) => ({k, n: m[1], v: rs.filter(r => r[3] === k).reduce((s,r) => s + r[6], 0), cap: rs.filter(r => r[3] === k && r[4] === 1).reduce((s,r) => s + r[6], 0)})).filter(x => x.v);
   const real = d.sit && !/^(none|n\/?a|no service impacts?\.?|there (is|are|will be) no)/i.test(d.sit);
   const back = !lastWasTreemap ? 'the treemap' : st.pg !== null ? `${D.bu[st.bu]} › ${D.pg[st.pg]}` : st.bu !== null ? D.bu[st.bu] : st.sa !== null ? D.sa[st.sa] : 'the citywide treemap';
   const pos = d.pos || [];
@@ -975,7 +1030,11 @@ function renderDPPage(i){
           ${progs.length > 1 ? `<tr class="tot"><td>Total</td>${tdT(tot)}${tdT(totGF)}<td>${d.fte ? fteS(d.fte) : '—'}</td></tr>` : ''}
         </tbody></table></div>` : `<p class="tnote">This request only changes resources, so it doesn't change any program's requirements.</p>`}
         ${cats.length ? `<h3>By spending category</h3><div class="tw"><table><thead><tr><th>Category</th><th>Change</th><th>Capital</th></tr></thead><tbody>
-          ${cats.map(x => `<tr><td>${esc(x.n)}</td>${tdT(x.v)}${td(x.cap)}</tr>`).join('')}
+          ${cats.map(x => { const uid = 'c' + (++CXN);
+              const ci = groupCI(rs.filter(r => r[3] === x.k), 8), capCI = groupCI(rs.filter(r => r[3] === x.k && r[4] === 1), 8);
+              const items = [...ci].filter(([,v]) => v).sort((a,b) => Math.abs(b[1]) - Math.abs(a[1]));
+              return `<tr class="cat"><td>${cxBtn(uid, esc(x.n), items.length)}</td>${tdT(x.v)}${td(x.cap)}</tr>` +
+                items.map(([c, v]) => `<tr class="ci" data-cp="${uid}" hidden><td>${esc(D.ci[c])}</td>${tdT(v)}${td(capCI.get(c) || 0)}</tr>`).join(''); }).join('')}
           <tr class="tot"><td>Total</td>${tdT(tot)}${tdT(cats.reduce((s,x) => s + x.cap, 0))}</tr></tbody></table></div>` : ''}
       </section>
     </div>
