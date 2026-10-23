@@ -137,6 +137,49 @@ aside.panel.open .pexp{position:static;background:none;padding-top:4px}
 .pexp button{all:unset;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink);border:1px solid var(--line-strong);border-radius:999px;padding:5px 14px;background:var(--surface)}
 .pexp button:hover{border-color:var(--muted)}
 .pexp button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.tmview{display:flex;flex-direction:column;gap:18px}
+/* program-level DP cards: link to full DP, partial-amount tag */
+.dtop h3 a{color:inherit;text-decoration:none;border-bottom:1px solid var(--line-strong)}
+.dtop h3 a:hover{border-bottom-color:var(--ink)}
+.dtop h3 a:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:2px}
+.ptag{display:inline-block;vertical-align:3px;margin-left:8px;font-family:var(--font-ui);font-size:11.5px;font-weight:600;color:#f0c060;border:1px solid color-mix(in oklab, #f0c060 55%, transparent);border-radius:999px;padding:1px 8px;white-space:nowrap}
+.ptag.whole{color:var(--muted);border-color:var(--line-strong)}
+.dfull{display:inline-block;margin-top:10px;font-size:13.5px;font-weight:600;color:var(--focus);text-decoration:none}
+.dfull:hover{text-decoration:underline}
+/* full decision package page */
+#dppage{display:flex;flex-direction:column;gap:22px}
+#dppage .back{all:unset;cursor:pointer;font-size:14px;color:var(--ink-2);font-weight:500;align-self:flex-start}
+#dppage .back:hover{color:var(--ink);text-decoration:underline}
+#dppage .back:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.dph{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px 32px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.dph h1{font-family:var(--font-label);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:4px 0 0;max-width:30ch;text-wrap:balance}
+.dph .meta{font-size:14px;color:var(--ink-2);margin:8px 0 0;display:flex;flex-wrap:wrap;gap:4px 18px;align-items:center}
+.dph .meta span{display:inline-flex;gap:6px;align-items:center}
+.dph .num{font-family:var(--font-label);font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1;text-align:right;font-variant-numeric:tabular-nums}
+.dph .cap{font-size:13px;color:var(--ink-2);margin-top:4px;text-align:right}
+@media (max-width:640px){.dph .num,.dph .cap{text-align:left}}
+.dpgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px 32px}
+@media (max-width:900px){.dpgrid{grid-template-columns:minmax(0,1fr)}}
+.dpcard{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px;min-width:0}
+.dpcard h2{font-family:var(--font-label);font-size:20px;font-weight:700;margin:0 0 4px}
+.dpcard .sub{font-size:13px;color:var(--muted);margin:0 0 10px}
+.dpcard p.txt{font-size:15px;line-height:1.6;color:var(--ink-2);margin:0;max-width:80ch}
+.dpcard h3{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 6px}
+.dpcard h3:first-child{margin-top:0}
+.dpcard table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+.dpcard th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap;vertical-align:bottom}
+.dpcard td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+.dpcard th:first-child,.dpcard td:first-child{text-align:left;padding-left:0;white-space:normal;min-width:160px}
+.dpcard tr.g td{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding-top:14px;border-bottom:0}
+.dpcard tr.tot td{font-weight:700;border-top:1px solid var(--line-strong)}
+.dpcard tr.net td{font-weight:700;border-top:2px solid var(--line-strong);border-bottom:0}
+.dpcard td.ok{color:#5fd0a3;font-weight:600}
+.dpcard td.off{color:#f0c060}
+.dpcard td small,.dpcard td .pj{display:block;color:var(--muted);font-size:12px;font-weight:400}
+.dpcard tr.go{cursor:pointer}
+.dpcard tr.go:hover td{background:color-mix(in oklab, var(--ink) 4%, transparent)}
+.dpcard tr.go td:first-child .pl{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+.dpcard .tnote{font-size:12.5px;color:var(--muted);margin:8px 0 0}
 .mocknote{font-size:13px;color:var(--ink-2);margin:-6px 0 0;max-width:110ch}
 .mocknote b{color:var(--ink)}
 .mocknote a{color:var(--ink-2)}
@@ -192,6 +235,7 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
 </style>
 
 <div class="wrap">
+ <div class="tmview" id="tmview">
   <header class="mast">
     <div>
       <p class="eyebrow">City of Portland · FY 2026-27 Adopted Budget and Fall Supplemental requests</p>
@@ -264,6 +308,10 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
   </div>
 
   <section id="dps" aria-label="Decision packages" hidden></section>
+
+  </div>
+
+  <section id="dppage" aria-live="polite" hidden></section>
 
   <footer class="src">
     <p><b>Decision packages.</b> Fall TAO D7 decision package export (__LINES__ line items, __NDP__ packages), requested expense requirements of __TOTEXP__. The financial export leaves out personnel costs generated by positions, so the __POSCOST__ in position costs from the personnel export are added to Personnel and assigned to sub-programs by each position's functional area. <b>Base budget</b> is the adopted budget alone, <b>All DPs</b> adds every request, and <b>DPs only</b> shows just the requested change. <b>Service impact</b> limits the requests to those tagged with or without a service impact (sample tags in this mockup). Program descriptions are from the FY 2026-27 Adopted Budget book.</p>
@@ -701,13 +749,17 @@ function dpCard(i, base, req, selSp){
   const subs = [...new Set(mine.map(r => r[5]))];
   const spSplit = subs.length > 1 ? `<p class="dsplit">By sub-program: ${subs.map(k => `${esc(D.sp[k])} ${money(mine.filter(r => r[5] === k).reduce((s,r) => s + r[6], 0), false, true)}`).join('; ')}.</p>` : '';
   const elsewhere = D.dr.filter(r => r[7] === i && !(r[0] === st.bu && r[1] === st.pg)).reduce((s,r) => s + r[6], 0);
+  const filtered = st.fund !== 'all' || st.measure !== 'total';
+  const scopeName = selSp !== null ? D.sp[selSp] : D.pg[st.pg];
+  const outside = D.dr.filter(r => r[7] === i && !(r[0] === st.bu && r[1] === st.pg && (selSp === null || r[5] === selSp))).some(r => r[6]);
+  const partial = outside || (filtered && D.dr.some(r => r[7] === i && !keepRow(r) && r[6]));
   const pos = D.dpos.filter(p => p[0] === i && subs.includes(p[1]));
   const fte = pos.reduce((s,p) => s + p[4], 0);
   const desc = d.d || 'No description provided.';
   const real = d.sit && !/^(none|n\/?a|no service impacts?\.?|there (is|are|will be) no)/i.test(d.sit);
   const tb = baseScope.reduce((s,r) => s + r[6], 0);
   return `<article class="dp">
-    <div class="dtop"><div><h3>${esc(d.n)}</h3>
+    <div class="dtop"><div><h3><a href="#dp-${d.id}" data-dplink="${d.id}">${esc(d.n)}</a>${partial ? `<span class="ptag" title="The table shows only the part of this request that falls in ${esc(scopeName)}${filtered ? ' and matches the current filters' : ''}. Open the request to see all of it.">Portion in this program</span>` : `<span class="ptag whole" title="This whole request falls in ${esc(scopeName)}.">Whole request in this program</span>`}</h3>
       <p class="dmeta">DP ${d.id} · ${esc(d.rt)} · <span class="imp"><span class="${d.si ? 'dot' : 'ring'}" aria-hidden="true"></span>${d.si ? 'Service impact' : 'No service impact'}, ${esc(d.tp)}</span></p></div>
       <div class="damt ${amt > 0 ? 'up' : amt < 0 ? 'down' : ''}">${money(amt, true, true)}${fte ? `<small>${fteS(fte)} FTE</small>` : ''}</div></div>
     <div class="dbody">
@@ -720,6 +772,7 @@ function dpCard(i, base, req, selSp){
       ${spSplit}
       ${pos.length ? `<details class="dpos"><summary>${pos.length} position${pos.length === 1 ? '' : 's'}, ${fteS(fte)} FTE</summary><table><tbody>${pos.map(p => `<tr><td>${esc(p[2])}<small>${esc(p[3])}${subs.length > 1 ? ', ' + esc(D.sp[p[1]]) : ''}</small></td><td>${fteS(p[4])} FTE</td><td class="${p[5] < 0 ? 'down' : ''}">${money(p[5], true)}</td></tr>`).join('')}</tbody></table></details>` : ''}
       ${elsewhere ? `<p class="dsplit">This request also changes other programs by ${money(elsewhere, false, true)}, for ${money(d.e, false, true)} in total.</p>` : ''}
+      <a class="dfull" href="#dp-${d.id}" data-dplink="${d.id}">View the full decision package</a>
       </div>
     </div></article>`;
 }
@@ -761,8 +814,114 @@ document.querySelectorAll('input[name="dp"]').forEach(i => i.addEventListener('c
 document.querySelectorAll('input[name="si"]').forEach(i => i.addEventListener('change', () => { st.si = i.value; st.allDP = false; render(); }));
 document.querySelectorAll('input[name="by"]').forEach(i => i.addEventListener('change', () => { st.by = i.value; st.pg = null; st.sel = null; render(); }));
 document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && inDP){ $('dpBack').click(); return; }
   if (e.key === 'Escape'){ if (st.sel){ st.sel = null; render(); } else if (st.pg !== null) go(st.sa, st.bu); else if (st.bu !== null) go(st.sa, null); else if (st.sa !== null) go(null, null); }
 });
-let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(render, 80); }).observe(tm);
-render();
+/* ---------- full decision package page (#dp-<id>) ---------- */
+const DPI = Object.fromEntries(D.dp.map((d, i) => [d.id, i]));
+const MO_ORDER = {0:['Beginning Fund Balance','Taxes','Licenses & Permits','Charges for Services','Intergovernmental','Bond & Note Proceeds','Miscellaneous','General Fund Discretionary','General Fund Overhead','Fund Transfers - Revenue','Interagency Revenue','Miscellaneous Fund Allocation'],
+  1:['Personnel','External Materials and Services','Internal Materials and Services','Capital Outlay','Debt Service','Fund Transfers - Expense','Contingency','Reserved for Future Expenditure','Debt Service Reserves','Ending Fund Balance']};
+const td = v => v ? `<td class="${v < 0 ? 'down' : ''}">${money(v, true)}</td>` : `<td class="z">—</td>`;
+const tdT = v => `<td class="${v < 0 ? 'down' : ''}">${money(v, true)}</td>`;
+function balanceTable(d){
+  const vol = {}; d.ln.forEach(([a,mo,f,v]) => vol[f] = (vol[f]||0) + Math.abs(v));
+  const isGFf = f => /\(100000\)$/.test(f);
+  let funds = Object.keys(vol).sort((x,y) => (isGFf(y)-isGFf(x)) || vol[y]-vol[x]);
+  const MAXF = 3, other = funds.length > MAXF + 1 ? funds.slice(MAXF) : [];
+  if (other.length) funds = funds.slice(0, MAXF);
+  const col = f => other.includes(f) ? '__o' : f;
+  const cols = [...funds, ...(other.length ? ['__o'] : [])], tot = cols.length > 1;
+  const S = {}; d.ln.forEach(([a,mo,f,v]) => { ((S[a] ??= {})[mo] ??= {}); S[a][mo][col(f)] = (S[a][mo][col(f)]||0) + v; });
+  const T = a => { const t = {}; Object.values(S[a]||{}).forEach(r => Object.entries(r).forEach(([c,v]) => t[c] = (t[c]||0)+v)); return t; };
+  const rt = r => cols.reduce((s,c) => s + (r[c]||0), 0);
+  const body = a => { const mos = Object.keys(S[a]||{}).sort((x,y) => MO_ORDER[a].indexOf(x) - MO_ORDER[a].indexOf(y));
+    return mos.length ? mos.map(mo => `<tr><td>${esc(mo)}</td>${cols.map(c => td(S[a][mo][c]||0)).join('')}${tot ? td(rt(S[a][mo])) : ''}</tr>`).join('')
+      : `<tr><td>None</td>${cols.map(() => '<td class="z">—</td>').join('')}${tot ? '<td class="z">—</td>' : ''}</tr>`; };
+  const Rv = T(0), Ev = T(1), span = cols.length + 1 + (tot ? 1 : 0);
+  const diff = v => Math.abs(v) < 1 ? `<td class="ok">Balanced</td>` : `<td class="off">${money(v, true)}</td>`;
+  return `<div class="tw"><table><thead><tr><th>Fund</th>${cols.map(c => `<th>${c === '__o' ? `${other.length} other funds` : esc(c)}</th>`).join('')}${tot ? '<th>Total</th>' : ''}</tr></thead><tbody>
+    <tr class="g"><td colspan="${span}">Resources</td></tr>${body(0)}
+    <tr class="tot"><td>Total resources</td>${cols.map(c => tdT(Rv[c]||0)).join('')}${tot ? tdT(rt(Rv)) : ''}</tr>
+    <tr class="g"><td colspan="${span}">Requirements</td></tr>${body(1)}
+    <tr class="tot"><td>Total requirements</td>${cols.map(c => tdT(Ev[c]||0)).join('')}${tot ? tdT(rt(Ev)) : ''}</tr>
+    <tr class="net"><td>Resources less requirements</td>${cols.map(c => diff((Rv[c]||0)-(Ev[c]||0))).join('')}${tot ? diff(rt(Rv)-rt(Ev)) : ''}</tr>
+  </tbody></table></div>${other.length ? `<p class="tnote">Other funds: ${other.map(esc).join('; ')}.</p>` : ''}`;
+}
+
+function renderDPPage(i){
+  const d = D.dp[i], b = d.b, sa = D.buSA[b];
+  const rs = D.dr.filter(r => r[7] === i);
+  // by program and sub-program, all funds
+  const pm = new Map();
+  rs.forEach(r => { const k = r[1] + '|' + r[5]; const o = pm.get(k) || {pg:r[1], sp:r[5], v:0, gf:0}; o.v += r[6]; if (r[2] === GF) o.gf += r[6]; pm.set(k, o); });
+  const fteBy = {}; D.dpos.filter(p => p[0] === i).forEach(p => fteBy[p[1]] = (fteBy[p[1]]||0) + p[4]);
+  const progs = [...pm.values()].filter(o => o.v).sort((a,b) => Math.abs(b.v) - Math.abs(a.v));
+  const tot = progs.reduce((s,o) => s + o.v, 0), totGF = progs.reduce((s,o) => s + o.gf, 0);
+  const cats = D.mo.map((m, k) => ({n: m[1], v: rs.filter(r => r[3] === k).reduce((s,r) => s + r[6], 0), cap: rs.filter(r => r[3] === k && r[4] === 1).reduce((s,r) => s + r[6], 0)})).filter(x => x.v);
+  const real = d.sit && !/^(none|n\/?a|no service impacts?\.?|there (is|are|will be) no)/i.test(d.sit);
+  const back = !lastWasTreemap ? 'the treemap' : st.pg !== null ? `${D.bu[st.bu]} › ${D.pg[st.pg]}` : st.bu !== null ? D.bu[st.bu] : st.sa !== null ? D.sa[st.sa] : 'the citywide treemap';
+  const pos = d.pos || [];
+  const pt = pos.reduce((a,p) => (a.f += p[4], a.s += p[5], a.b += p[6], a.t += p[7], a), {f:0,s:0,b:0,t:0});
+  const h = `
+    <button type="button" class="back" id="dpBack">‹ Back to ${esc(back)}</button>
+    <header class="dph"><div>
+      <p class="eyebrow">Decision package ${d.id} · FY 2026-27 Fall Supplemental Budget</p>
+      <h1>${esc(d.n)}</h1>
+      <p class="meta"><span>${esc(D.bu[b])}</span><span>${esc(D.sa[sa])}</span><span>${esc(d.rt)}</span>
+        <span><span class="${d.si ? 'dot' : 'ring'}" aria-hidden="true"></span>${d.si ? 'Service impact' : 'No service impact'}, ${esc(d.tp)} <span class="samp">sample tag</span></span></p></div>
+      <div><div class="num ${tot > 0 ? 'up' : tot < 0 ? 'down' : ''}">${money(tot, false, true)}</div>
+        <div class="cap">Net change in requirements, all funds${totGF ? ` · General Fund ${money(totGF, false, true)}` : ''}${d.fte ? ` · ${fteS(d.fte)} FTE` : ''}</div></div>
+    </header>
+    <div class="dpgrid">
+      <section class="dpcard"><h3>Description</h3><p class="txt">${esc(d.d || 'No description provided.')}</p>
+        <h3>Service impacts</h3><p class="txt${real ? '' : ' none'}">${esc(real ? d.sit : (d.sit || 'None provided.'))}</p>
+        ${d.eq ? `<h3>Equity outcomes and impact tracking</h3><p class="txt">${esc(d.eq)}</p>` : ''}</section>
+      <section class="dpcard"><h2>Programs this request changes</h2><p class="sub">${progs.length} sub-program${progs.length === 1 ? '' : 's'} in ${esc(D.bu[b])}. Select one to open it in the treemap.</p>
+        ${progs.length ? `<div class="tw"><table><thead><tr><th>Program and sub-program</th><th>Change</th><th>General Fund</th><th>FTE</th></tr></thead><tbody>
+          ${progs.map(o => `<tr class="go" data-pg="${o.pg}" data-sp="${o.sp}" tabindex="0"><td><span class="pl">${esc(D.pg[o.pg])}</span><small>${esc(D.sp[o.sp])}</small></td>${tdT(o.v)}${td(o.gf)}<td>${fteBy[o.sp] ? fteS(fteBy[o.sp]) : '<span class="z">—</span>'}</td></tr>`).join('')}
+          ${progs.length > 1 ? `<tr class="tot"><td>Total</td>${tdT(tot)}${tdT(totGF)}<td>${d.fte ? fteS(d.fte) : '—'}</td></tr>` : ''}
+        </tbody></table></div>` : `<p class="tnote">This request only changes resources, so it doesn't change any program's requirements.</p>`}
+        ${cats.length ? `<h3>By spending category</h3><div class="tw"><table><thead><tr><th>Category</th><th>Change</th><th>Capital</th></tr></thead><tbody>
+          ${cats.map(x => `<tr><td>${esc(x.n)}</td>${tdT(x.v)}${td(x.cap)}</tr>`).join('')}
+          <tr class="tot"><td>Total</td>${tdT(tot)}${tdT(cats.reduce((s,x) => s + x.cap, 0))}</tr></tbody></table></div>` : ''}
+      </section>
+    </div>
+    <section class="dpcard"><h2>Resources and requirements by fund</h2><p class="sub">The full request as entered in BFM, with position costs from the personnel export added to Personnel.</p>${balanceTable(d)}</section>
+    ${pos.length ? `<section class="dpcard"><h2>Positions</h2><p class="sub">${pos.length} position${pos.length === 1 ? '' : 's'}, ${fteS(pt.f)} FTE</p>
+      <div class="tw"><table><thead><tr><th>Position</th><th>Sub-program</th><th>FTE</th><th>Salary</th><th>Benefits and taxes</th><th>Total</th></tr></thead><tbody>
+      ${pos.map(p => `<tr><td>${esc(p[1])}<span class="pj">${esc(p[0])}${p[8] ? ' · ' + esc(p[8]) : ''}</span></td><td style="text-align:left;white-space:normal">${esc(p[9] || '')}</td><td>${fteS(p[4])}</td>${td(p[5])}${td(p[6])}${td(p[7])}</tr>`).join('')}
+      <tr class="tot"><td>Total</td><td></td><td>${fteS(pt.f)}</td>${tdT(pt.s)}${tdT(pt.b)}${tdT(pt.t)}</tr></tbody></table></div></section>` : ''}`;
+  const box = $('dppage'); box.innerHTML = h;
+  $('dpBack').onclick = () => history.length > 1 && lastWasTreemap ? history.back() : (location.hash = '');
+  box.querySelectorAll('tr.go').forEach(tr => {
+    const open = () => { const p = +tr.dataset.pg, s = +tr.dataset.sp; st.sa = sa; st.bu = b; st.pg = p; st.sel = 'u' + s; st.full = false; st.allDP = false; st.panel = false; savedY = 0; location.hash = ''; };
+    tr.onclick = open; tr.onkeydown = e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); open(); } };
+  });
+  document.title = `DP ${d.id}: ${d.n}`;
+}
+
+let savedY = 0, lastWasTreemap = false, inDP = false;
+document.addEventListener('click', e => {
+  const a = e.target.closest('[data-dplink]'); if (!a) return;
+  savedY = scrollY; lastWasTreemap = true;
+});
+function route(){
+  const m = location.hash.match(/^#dp-(\d+)$/);
+  const i = m ? DPI[m[1]] : undefined;
+  if (i !== undefined){
+    inDP = true; hideTip();
+    $('tmview').hidden = true; $('dppage').hidden = false;
+    renderDPPage(i); window.scrollTo(0, 0); $('dpBack').focus({preventScroll:true});
+  } else {
+    const wasDP = inDP; inDP = false;
+    $('dppage').hidden = true; $('tmview').hidden = false;
+    document.title = 'Budget Treemap with DPs';
+    lastLevelKey = ''; render();
+    if (wasDP) requestAnimationFrame(() => window.scrollTo(0, savedY));
+    lastWasTreemap = false;
+  }
+}
+window.addEventListener('hashchange', route);
+let rt; new ResizeObserver(() => { if (inDP) return; clearTimeout(rt); rt = setTimeout(render, 80); }).observe(tm);
+route();
 </script>

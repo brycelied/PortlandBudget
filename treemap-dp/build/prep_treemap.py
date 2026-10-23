@@ -77,7 +77,8 @@ def capital(project, cip_prog):
 dps = sorted(P['dps'], key=lambda d: d['id'])
 dp_index = {d['id']: k for k, d in enumerate(dps)}
 D['dp'] = [{'id': d['id'], 'n': d['name'], 'b': bureau_idx(d['b']), 'rt': d['rt'], 'si': d['si'], 'tp': d['tp'],
-            'd': d['d'], 'sit': d['sit'], 'eq': d['eq'], 'fte': d['fte'], 'e': d['e']} for d in dps]
+            'd': d['d'], 'sit': d['sit'], 'eq': d['eq'], 'fte': d['fte'], 'e': d['e'],
+            'ln': d['ln'], 'pos': d['pos']} for d in dps]
 
 # ---------- DP rows ----------
 fin['b'] = fin['Bureau - Name'].str[:2]
