@@ -124,6 +124,8 @@ footer.src b{color:var(--ink)}
 .seg input:checked + label .dot{background:var(--chip-ink)}
 .seg input:checked + label .ring{box-shadow:inset 0 0 0 1.5px var(--chip-ink)}
 @media (max-width:560px){.seg{flex-wrap:wrap}.controls .ctl{max-width:100%}}
+.controls{flex-direction:column;align-items:stretch;gap:14px}
+.crow{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end}
 .mocknote{font-size:13px;color:var(--ink-2);margin:-6px 0 0;max-width:110ch}
 .mocknote b{color:var(--ink)}
 .mocknote a{color:var(--ink-2)}
@@ -193,6 +195,7 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
   <p class="mocknote"><b>Mockup.</b> Adds the FY 2026-27 Fall Supplemental decision packages (DPs) to the <a href="../">adopted budget treemap</a>. Open any program to read its description and the requests that change it. Impact tags on requests are sample values.</p>
 
   <div class="controls">
+   <div class="crow">
     <div class="ctl">
       <span class="ctl-label" id="lbl-dp">Decision packages</span>
       <div class="seg" role="radiogroup" aria-labelledby="lbl-dp">
@@ -209,6 +212,8 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
         <input type="radio" name="si" id="si-n" value="n"><label for="si-n"><span class="ring" aria-hidden="true"></span> No service impact</label>
       </div>
     </div>
+   </div>
+   <div class="crow">
     <div class="ctl">
       <span class="ctl-label" id="lbl-fund">Funds</span>
       <div class="seg" role="radiogroup" aria-labelledby="lbl-fund">
@@ -231,6 +236,7 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
         <input type="radio" name="by" id="by-fund" value="fund" disabled><label for="by-fund">By fund</label>
       </div>
     </div>
+   </div>
   </div>
 
   <nav class="crumbs" id="crumbs" aria-label="Treemap level"></nav>
