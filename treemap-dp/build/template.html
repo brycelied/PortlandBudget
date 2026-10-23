@@ -202,6 +202,30 @@ aside.panel.open .pexp{position:static;background:none;padding-top:4px}
 .nmore{all:unset;cursor:pointer;color:var(--focus);font-size:13.5px;font-weight:500;margin:10px 16px 0 0;display:inline-block}
 .nmore:hover{text-decoration:underline}
 #dps{display:flex;flex-direction:column;gap:16px}
+.gtools{display:flex;gap:4px;margin-top:-6px}
+.gtools .nmore{margin:0 14px 0 0}
+.gtable{background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.gtable.nested{border:0;border-radius:0;background:transparent;margin:0 0 0 18px;border-left:1px solid var(--line-strong)}
+.grow{all:unset;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) 72px 110px 140px 110px 70px;gap:10px;align-items:center;width:100%;padding:10px 14px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums;font-size:14px}
+.grow > span:not(:first-child){text-align:right;white-space:nowrap}
+button.grow{cursor:pointer}
+button.grow:hover{background:color-mix(in oklab, var(--ink) 5%, transparent)}
+button.grow:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.grow.ghd{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom-color:var(--line-strong);padding-top:8px;padding-bottom:8px}
+.gname{font-weight:600;display:flex;gap:8px;align-items:baseline;min-width:0}
+.gname .car{color:var(--muted);width:10px;flex:none}
+.nested .gname{font-weight:500}
+.gitem.open > .grow{background:color-mix(in oklab, var(--ink) 4%, transparent)}
+.gbody{display:flex;flex-direction:column;gap:12px;padding:12px 14px 16px;border-bottom:1px solid var(--line)}
+.nested .gbody{padding-left:0;padding-right:0}
+.gbody article.dp{background:var(--bg)}
+.nested .gitem:last-child > .grow{border-bottom:0}
+@media (max-width:760px){
+  .grow{grid-template-columns:minmax(0,1fr) 92px;gap:2px 10px}
+  .grow > span:nth-child(2),.grow > span:nth-child(3),.grow > span:nth-child(5),.grow > span:nth-child(6){display:none}
+  .grow.ghd > span:nth-child(4){font-size:0}.grow.ghd > span:nth-child(4)::after{content:"DPs";font-size:11px}
+  .gtable.nested{margin-left:8px}
+}
 #dps .dhead h2{font-family:var(--font-label);font-size:24px;font-weight:700;margin:0;line-height:1.2}
 #dps .sub{font-size:13.5px;color:var(--ink-2);margin:4px 0 0}
 .dnote{font-size:13.5px;color:var(--ink-2);margin:6px 0 0}
@@ -326,7 +350,7 @@ details.dpos td small{display:block;color:var(--muted);font-size:12px}
 <script>
 const D = __DATA__;
 const GF = D.fd.findIndex(f => f.startsWith('100 '));
-const st = {fund:'all', measure:'total', by:'program', dp:'all', si:'all', panel:false, sa:null, bu:null, pg:null, sel:null, full:false, allDP:false};
+const st = {fund:'all', measure:'total', by:'program', dp:'all', si:'all', panel:false, openG:new Set(), allG:new Set(), sa:null, bu:null, pg:null, sel:null, full:false, allDP:false};
 const $ = id => document.getElementById(id);
 const tm = $('tm'), tip = $('tip');
 const isDP = r => r.length > 7;
@@ -703,75 +727,143 @@ function renderNarrative(V){
   box.querySelectorAll('.nlink').forEach(b => b.onclick = () => { st.sel = 'u' + b.dataset.sp; st.full = false; render(); });
 }
 
-/* ---------- decision packages for this program ---------- */
+/* ---------- decision packages at every level ---------- */
 const MOI = D.mo.map((m, i) => i);
+const sumv = rs => rs.reduce((s,r) => s + r[6], 0);
+const nDP = rs => new Set(rs.filter(r => r[6]).map(r => r[7])).size;
+const cls = v => v > 0 ? 'up' : v < 0 ? 'down' : 'z';
+const filtTxt = () => (st.si === 'y' ? 'requests with service impact, ' : st.si === 'n' ? 'requests with no service impact, ' : '') +
+  (st.fund === 'gf' ? 'General Fund' : 'all funds') + (st.measure === 'total' ? '' : st.measure === 'cap' ? ', capital only' : ', operating only');
+const KIND = {
+  sa: {key: r => D.buSA[r[0]], name: k => D.sa[k], next: 'bu', label: 'Service area'},
+  bu: {key: r => r[0], name: k => D.bu[k], next: 'cards', label: 'Bureau', cardBase: 'Bureau'},
+  pg: {key: r => r[1], name: k => D.pg[k], next: 'cards', label: 'Program', cardBase: 'Program'},
+};
+
 function renderDPs(V){
   const box = $('dps');
-  if (V.level !== 'program'){ box.hidden = true; box.innerHTML = ''; return; }
-  const selSp = st.sel ? +st.sel.slice(1) : null;
-  const inProg = r => r[0] === st.bu && r[1] === st.pg && keepRow(r);
-  const base = D.rows.filter(inProg), req = D.dr.filter(r => inProg(r) && siOK(r));
-  const subs = programSubs();
-  const bySp = (rs, k) => rs.filter(r => r[5] === k).reduce((s,r) => s + r[6], 0);
-  // summary: each sub-program, adopted vs with all requests
-  const sumRows = subs.map(k => ({k, b: bySp(base, k), c: bySp(req, k)})).filter(x => x.b || x.c).sort((a,b) => b.b - a.b);
-  const tb = sumRows.reduce((s,x) => s + x.b, 0), tc = sumRows.reduce((s,x) => s + x.c, 0);
-  const dpIds = [...new Set(req.filter(r => selSp === null || r[5] === selSp).map(r => r[7]))];
-  const dpAmt = i => req.filter(r => r[7] === i && (selSp === null || r[5] === selSp)).reduce((s,r) => s + r[6], 0);
-  dpIds.sort((a,b) => Math.abs(dpAmt(b)) - Math.abs(dpAmt(a)));
-  const filt = (st.si === 'y' ? 'requests with service impact, ' : st.si === 'n' ? 'requests with no service impact, ' : '') + (st.fund === 'gf' ? 'General Fund' : 'all funds') + (st.measure === 'total' ? '' : st.measure === 'cap' ? ', capital only' : ', operating only');
-  const mode = st.dp === 'base' ? `<p class="dnote">These requests are not included in the treemap while <b>Base budget</b> is selected.</p>` : '';
-  let h = `<div class="dhead"><h2>Decision packages changing ${esc(selSp !== null ? D.sp[selSp] : D.pg[st.pg])}</h2>
-    <p class="sub">${dpIds.length} request${dpIds.length === 1 ? '' : 's'}, ${money(selSp !== null ? sumRows.find(x => x.k === selSp)?.c || 0 : tc, true, true)} in ${filt}. Impact tags are sample values for this mockup.</p>${mode}</div>`;
-  if (sumRows.length && selSp === null){
-    h += `<div class="tw"><table class="sumt"><thead><tr><th>Sub-program</th><th>Adopted</th><th>Decision packages</th><th>With DPs</th><th>Change</th></tr></thead><tbody>
-      ${sumRows.map(x => `<tr><td>${esc(D.sp[x.k])}</td><td>${money(x.b, true)}</td><td class="${x.c > 0 ? 'up' : x.c < 0 ? 'down' : 'z'}">${x.c ? money(x.c, true, true) : '—'}</td><td>${money(x.b + x.c, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
-      ${sumRows.length > 1 ? `<tr class="tot"><td>${esc(D.pg[st.pg])}</td><td>${money(tb, true)}</td><td class="${tc > 0 ? 'up' : tc < 0 ? 'down' : ''}">${money(tc, true, true)}</td><td>${money(tb + tc, true)}</td><td>${chg(tc, tb) || '—'}</td></tr>` : ''}
-    </tbody></table></div>`;
+  const selSp = V.level === 'program' && st.sel ? +st.sel.slice(1) : null;
+  const where = V.level === 'program' ? (selSp !== null ? D.sp[selSp] : D.pg[st.pg]) : V.level === 'bureau' ? D.bu[st.bu] : V.level === 'sa' ? D.sa[st.sa] : 'the City';
+  box.hidden = false;
+  if (st.dp === 'base'){
+    box.innerHTML = `<div class="dhead"><h2>Decision packages</h2><p class="sub">Not shown while <b>Base budget</b> is selected. <button type="button" class="nmore" id="dpOn" style="margin:0">Include all DPs</button></p></div>`;
+    $('dpOn').onclick = () => { $('dp-all').checked = true; st.dp = 'all'; render(); };
+    return;
   }
-  if (!dpIds.length) h += `<p class="dnote">No decision packages change this ${selSp !== null ? 'sub-program' : 'program'} in ${filt}.</p>`;
-  const LIMD = 6, shownIds = st.allDP ? dpIds : dpIds.slice(0, LIMD);
-  h += shownIds.map(i => dpCard(i, base, req, selSp)).join('');
-  if (dpIds.length > LIMD) h += `<button type="button" class="btn" id="dpall" style="align-self:flex-start">${st.allDP ? `Show the ${LIMD} largest requests` : `Show all ${dpIds.length} requests`}</button>`;
-  box.innerHTML = h; box.hidden = false;
+  const inScope = r => (st.sa === null || D.buSA[r[0]] === st.sa) && (st.bu === null || r[0] === st.bu) && (st.pg === null || r[1] === st.pg) && (selSp === null || r[5] === selSp);
+  const req = D.dr.filter(r => keepRow(r) && siOK(r) && inScope(r));
+  const base = D.rows.filter(r => keepRow(r) && inScope(r));
+  const n = nDP(req), tc = sumv(req);
+  let h = `<div class="dhead"><h2>Decision packages ${V.level === 'city' ? 'citywide' : 'in ' + esc(where)}</h2>
+    <p class="sub">${n} request${n === 1 ? '' : 's'}, ${money(tc, true, true)} in ${filtTxt()}. Impact tags are sample values for this mockup.</p></div>`;
+  if (!n){ box.innerHTML = h + `<p class="dnote">No decision packages match these toggles here.</p>`; return; }
+
+  if (V.level === 'program'){
+    const subs = programSubs();
+    const bySp = (rs, k) => sumv(rs.filter(r => r[5] === k));
+    const progBase = D.rows.filter(r => keepRow(r) && r[0] === st.bu && r[1] === st.pg);
+    const progReq = D.dr.filter(r => keepRow(r) && siOK(r) && r[0] === st.bu && r[1] === st.pg);
+    const sumRows = subs.map(k => ({k, b: bySp(progBase, k), c: bySp(progReq, k), n: nDP(progReq.filter(r => r[5] === k))})).filter(x => x.b || x.c).sort((a,b) => b.b - a.b);
+    if (selSp === null && sumRows.length) h += summaryTable('Sub-program', sumRows.map(x => ({name: D.sp[x.k], ...x})), D.pg[st.pg]);
+    const ids = [...new Set(req.filter(r => r[6]).map(r => r[7]))].sort((a,b) => Math.abs(sumv(req.filter(r => r[7] === b))) - Math.abs(sumv(req.filter(r => r[7] === a))));
+    const LIMD = 6, shown = st.allDP ? ids : ids.slice(0, LIMD);
+    h += shown.map(i => dpCard(i, req.filter(r => r[7] === i), base, selSp !== null ? 'Sub-program' : 'Program', where, 'sp', true)).join('');
+    if (ids.length > LIMD) h += `<button type="button" class="btn" id="dpall" style="align-self:flex-start">${st.allDP ? `Show the ${LIMD} largest requests` : `Show all ${ids.length} requests`}</button>`;
+  } else {
+    const kind = V.level === 'city' ? 'sa' : V.level === 'sa' ? 'bu' : 'pg';
+    h += `<div class="gtools"><button type="button" class="nmore" id="gx">Expand all</button><button type="button" class="nmore" id="gc">Collapse all</button></div>`;
+    h += `<div class="gtable" role="list">${groupHead(KIND[kind].label)}${groups(kind, req, base, '')}</div>`;
+  }
+  box.innerHTML = h;
   const da = $('dpall'); if (da) da.onclick = () => { st.allDP = !st.allDP; renderDPs(view()); };
+  const gx = $('gx'); if (gx) gx.onclick = () => { box.querySelectorAll('[data-g]').forEach(b => st.openG.add(b.dataset.g)); expandAllDeep(V, req, base); renderDPs(view()); };
+  const gc = $('gc'); if (gc) gc.onclick = () => { st.openG.clear(); renderDPs(view()); };
+  box.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { const k = b.dataset.g; st.openG.has(k) ? st.openG.delete(k) : st.openG.add(k); renderDPs(view()); });
+  box.querySelectorAll('[data-gall]').forEach(b => b.onclick = () => { const k = b.dataset.gall; st.allG.has(k) ? st.allG.delete(k) : st.allG.add(k); renderDPs(view()); });
   box.querySelectorAll('[data-more]').forEach(b => b.onclick = () => {
     const t = document.getElementById(b.dataset.more); const c = t.classList.toggle('clamp'); b.textContent = c ? 'Read more' : 'Show less'; });
 }
+// open every nested group path (service area -> bureau) under the current level
+function expandAllDeep(V, req){
+  if (V.level !== 'city') return;
+  new Set(req.map(r => D.buSA[r[0]])).forEach(sa => {
+    st.openG.add('sa' + sa);
+    new Set(req.filter(r => D.buSA[r[0]] === sa).map(r => r[0])).forEach(b => st.openG.add('sa' + sa + '/bu' + b));
+  });
+}
 
-function dpCard(i, base, req, selSp){
+function groupHead(label){
+  return `<div class="grow ghd" aria-hidden="true"><span>${esc(label)}</span><span>Requests</span><span>Adopted</span><span>Decision packages</span><span>With DPs</span><span>Change</span></div>`;
+}
+function groups(kind, req, base, path){
+  const K = KIND[kind];
+  const keys = [...new Set(req.filter(r => r[6]).map(K.key))];
+  const gs = keys.map(k => { const rq = req.filter(r => K.key(r) === k), bs = base.filter(r => K.key(r) === k);
+      return {k, rq, bs, c: sumv(rq), b: sumv(bs), n: nDP(rq)}; })
+    .filter(g => g.n).sort((a,b) => Math.abs(b.c) - Math.abs(a.c));
+  return gs.map(g => {
+    const id = path + kind + g.k, open = st.openG.has(id);
+    let inner = '';
+    if (open){
+      if (K.next === 'cards'){
+        const ids = [...new Set(g.rq.filter(r => r[6]).map(r => r[7]))].sort((a,b) => Math.abs(sumv(g.rq.filter(r => r[7] === b))) - Math.abs(sumv(g.rq.filter(r => r[7] === a))));
+        const LIM = 5, all = st.allG.has(id), shown = all ? ids : ids.slice(0, LIM);
+        inner = shown.map(i => dpCard(i, g.rq.filter(r => r[7] === i), g.bs, K.cardBase, K.name(g.k), kind === 'pg' ? 'sp' : 'pg', kind === 'pg')).join('') +
+          (ids.length > LIM ? `<button type="button" class="btn" data-gall="${id}" style="align-self:flex-start">${all ? `Show the ${LIM} largest` : `Show all ${ids.length} requests in ${esc(K.name(g.k))}`}</button>` : '');
+      } else {
+        inner = `<div class="gtable nested">${groups(K.next, g.rq, g.bs, id + '/')}</div>`;
+      }
+    }
+    return `<div class="gitem${open ? ' open' : ''}" role="listitem">
+      <button type="button" class="grow" data-g="${id}" aria-expanded="${open}">
+        <span class="gname"><span class="car" aria-hidden="true">${open ? '▾' : '▸'}</span>${esc(K.name(g.k))}</span>
+        <span class="gn">${g.n}</span><span>${money(g.b)}</span><span class="${cls(g.c)}">${money(g.c, false, true)}</span><span>${money(g.b + g.c)}</span><span class="z">${chg(g.c, g.b) || '—'}</span>
+      </button>${open ? `<div class="gbody">${inner}</div>` : ''}</div>`;
+  }).join('');
+}
+function summaryTable(label, rows, totalName){
+  const tb = rows.reduce((s,x) => s + x.b, 0), tc = rows.reduce((s,x) => s + x.c, 0);
+  return `<div class="tw"><table class="sumt"><thead><tr><th>${esc(label)}</th><th>Adopted</th><th>Decision packages</th><th>With DPs</th><th>Change</th></tr></thead><tbody>
+    ${rows.map(x => `<tr><td>${esc(x.name)}</td><td>${money(x.b, true)}</td><td class="${cls(x.c)}">${x.c ? money(x.c, true, true) : '—'}</td><td>${money(x.b + x.c, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
+    ${rows.length > 1 ? `<tr class="tot"><td>${esc(totalName)}</td><td>${money(tb, true)}</td><td class="${cls(tc)}">${money(tc, true, true)}</td><td>${money(tb + tc, true)}</td><td>${chg(tc, tb) || '—'}</td></tr>` : ''}
+  </tbody></table></div>`;
+}
+
+// one request: its rows within the current scope, compared with the adopted budget of the scope it is listed under
+function dpCard(i, mine, baseScope, baseLabel, scopeName, split, programScope){
   const d = D.dp[i];
-  const mine = req.filter(r => r[7] === i && (selSp === null || r[5] === selSp));
-  const baseScope = selSp === null ? base : base.filter(r => r[5] === selSp);
-  const amt = mine.reduce((s,r) => s + r[6], 0);
-  // by spending category: adopted base for this program vs this request
-  const cats = MOI.map(m => ({m, b: baseScope.filter(r => r[3] === m).reduce((s,r) => s + r[6], 0), c: mine.filter(r => r[3] === m).reduce((s,r) => s + r[6], 0)})).filter(x => x.c);
-  const subs = [...new Set(mine.map(r => r[5]))];
-  const spSplit = subs.length > 1 ? `<p class="dsplit">By sub-program: ${subs.map(k => `${esc(D.sp[k])} ${money(mine.filter(r => r[5] === k).reduce((s,r) => s + r[6], 0), false, true)}`).join('; ')}.</p>` : '';
-  const elsewhere = D.dr.filter(r => r[7] === i && !(r[0] === st.bu && r[1] === st.pg)).reduce((s,r) => s + r[6], 0);
+  const amt = sumv(mine);
+  const cats = MOI.map(m => ({m, b: sumv(baseScope.filter(r => r[3] === m)), c: sumv(mine.filter(r => r[3] === m))})).filter(x => x.c);
+  const mineSet = new Set(mine);
+  const partial = D.dr.some(r => r[7] === i && r[6] && !mineSet.has(r));
   const filtered = st.fund !== 'all' || st.measure !== 'total';
-  const scopeName = selSp !== null ? D.sp[selSp] : D.pg[st.pg];
-  const outside = D.dr.filter(r => r[7] === i && !(r[0] === st.bu && r[1] === st.pg && (selSp === null || r[5] === selSp))).some(r => r[6]);
-  const partial = outside || (filtered && D.dr.some(r => r[7] === i && !keepRow(r) && r[6]));
-  const pos = D.dpos.filter(p => p[0] === i && subs.includes(p[1]));
+  const keys = [...new Set(mine.map(r => split === 'sp' ? r[5] : r[1]))];
+  const splitLine = keys.length > 1 ? `<p class="dsplit">By ${split === 'sp' ? 'sub-program' : 'program'}: ${keys.map(k => `${esc(split === 'sp' ? D.sp[k] : D.pg[k])} ${money(sumv(mine.filter(r => (split === 'sp' ? r[5] : r[1]) === k)), false, true)}`).join('; ')}.</p>` : '';
+  const sps = new Set(mine.map(r => r[5]));
+  const pos = D.dpos.filter(p => p[0] === i && sps.has(p[1]) && (!programScope || true));
   const fte = pos.reduce((s,p) => s + p[4], 0);
   const desc = d.d || 'No description provided.';
   const real = d.sit && !/^(none|n\/?a|no service impacts?\.?|there (is|are|will be) no)/i.test(d.sit);
-  const tb = baseScope.reduce((s,r) => s + r[6], 0);
+  const tb = sumv(baseScope);
+  const unit = baseLabel.toLowerCase();
+  const tag = programScope
+    ? (partial ? `<span class="ptag" title="The table shows only the part of this request in ${esc(scopeName)}${filtered ? ' that matches the current filters' : ''}. Open the request to see all of it.">Portion in this ${unit}</span>`
+               : `<span class="ptag whole" title="This whole request falls in ${esc(scopeName)}.">Whole request in this ${unit}</span>`)
+    : (partial ? `<span class="ptag" title="Only the part of this request that matches the current fund and budget measure filters is shown.">Portion matching filters</span>` : '');
   return `<article class="dp">
-    <div class="dtop"><div><h3><a href="#dp-${d.id}" data-dplink="${d.id}">${esc(d.n)}</a>${partial ? `<span class="ptag" title="The table shows only the part of this request that falls in ${esc(scopeName)}${filtered ? ' and matches the current filters' : ''}. Open the request to see all of it.">Portion in this program</span>` : `<span class="ptag whole" title="This whole request falls in ${esc(scopeName)}.">Whole request in this program</span>`}</h3>
-      <p class="dmeta">DP ${d.id} · ${esc(d.rt)} · <span class="imp"><span class="${d.si ? 'dot' : 'ring'}" aria-hidden="true"></span>${d.si ? 'Service impact' : 'No service impact'}, ${esc(d.tp)}</span></p></div>
-      <div class="damt ${amt > 0 ? 'up' : amt < 0 ? 'down' : ''}">${money(amt, true, true)}${fte ? `<small>${fteS(fte)} FTE</small>` : ''}</div></div>
+    <div class="dtop"><div><h3><a href="#dp-${d.id}" data-dplink="${d.id}">${esc(d.n)}</a>${tag}</h3>
+      <p class="dmeta">DP ${d.id} · ${esc(D.bu[d.b])} · ${esc(d.rt)} · <span class="imp"><span class="${d.si ? 'dot' : 'ring'}" aria-hidden="true"></span>${d.si ? 'Service impact' : 'No service impact'}, ${esc(d.tp)}</span></p></div>
+      <div class="damt ${cls(amt)}">${money(amt, true, true)}${fte ? `<small>${fteS(fte)} FTE</small>` : ''}</div></div>
     <div class="dbody">
-      <div class="dtext"><p class="clamp" id="dd-${d.id}">${esc(desc)}</p>${desc.length > 360 ? `<button type="button" class="nmore" data-more="dd-${d.id}">Read more</button>` : ''}
+      <div class="dtext"><p class="clamp" id="dd-${d.id}-${esc(scopeName).replace(/\W+/g,'')}">${esc(desc)}</p>${desc.length > 360 ? `<button type="button" class="nmore" data-more="dd-${d.id}-${esc(scopeName).replace(/\W+/g,'')}">Read more</button>` : ''}
         ${real ? `<p class="dsi"><b>Service impacts.</b> ${esc(d.sit)}</p>` : ''}</div>
-      <div class="tw"><table><thead><tr><th>Spending category</th><th>Adopted</th><th>This request</th><th>Change</th></tr></thead><tbody>
-        ${cats.map(x => `<tr><td>${esc(D.mo[x.m][1])}</td><td>${money(x.b, true)}</td><td class="${x.c > 0 ? 'up' : 'down'}">${money(x.c, true, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
-        <tr class="tot"><td>${selSp !== null ? 'Sub-program' : 'Program'} total</td><td>${money(tb, true)}</td><td class="${amt > 0 ? 'up' : amt < 0 ? 'down' : ''}">${money(amt, true, true)}</td><td>${chg(amt, tb) || '—'}</td></tr>
+      <div class="tw"><table><thead><tr><th>Spending category</th><th>${esc(baseLabel)} adopted</th><th>This request</th><th>Change</th></tr></thead><tbody>
+        ${cats.map(x => `<tr><td>${esc(D.mo[x.m][1])}</td><td>${money(x.b, true)}</td><td class="${cls(x.c)}">${money(x.c, true, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
+        <tr class="tot"><td>${esc(baseLabel)} total</td><td>${money(tb, true)}</td><td class="${cls(amt)}">${money(amt, true, true)}</td><td>${chg(amt, tb) || '—'}</td></tr>
       </tbody></table>
-      ${spSplit}
-      ${pos.length ? `<details class="dpos"><summary>${pos.length} position${pos.length === 1 ? '' : 's'}, ${fteS(fte)} FTE</summary><table><tbody>${pos.map(p => `<tr><td>${esc(p[2])}<small>${esc(p[3])}${subs.length > 1 ? ', ' + esc(D.sp[p[1]]) : ''}</small></td><td>${fteS(p[4])} FTE</td><td class="${p[5] < 0 ? 'down' : ''}">${money(p[5], true)}</td></tr>`).join('')}</tbody></table></details>` : ''}
-      ${elsewhere ? `<p class="dsplit">This request also changes other programs by ${money(elsewhere, false, true)}, for ${money(d.e, false, true)} in total.</p>` : ''}
+      ${splitLine}
+      ${pos.length ? `<details class="dpos"><summary>${pos.length} position${pos.length === 1 ? '' : 's'}, ${fteS(fte)} FTE</summary><table><tbody>${pos.map(p => `<tr><td>${esc(p[2])}<small>${esc(p[3])}, ${esc(D.sp[p[1]])}</small></td><td>${fteS(p[4])} FTE</td><td class="${p[5] < 0 ? 'down' : ''}">${money(p[5], true)}</td></tr>`).join('')}</tbody></table></details>` : ''}
+      ${partial ? `<p class="dsplit">The full request is ${money(d.e, false, true)} across all programs and funds.</p>` : ''}
       <a class="dfull" href="#dp-${d.id}" data-dplink="${d.id}">View the full decision package</a>
       </div>
     </div></article>`;
@@ -805,8 +897,8 @@ function showTip(ev, d, V, kind){
 function hideTip(){ tip.hidden = true; }
 
 /* ---------- navigation ---------- */
-function go(sa, bu){ st.sa = sa; st.bu = bu; st.pg = null; st.sel = null; st.full = false; hideTip(); render(); }
-function goPg(pg){ st.pg = pg; st.sel = null; st.full = false; st.allDP = false; hideTip(); render(); }
+function go(sa, bu){ st.sa = sa; st.bu = bu; st.pg = null; st.sel = null; st.full = false; st.openG.clear(); st.allG.clear(); hideTip(); render(); }
+function goPg(pg){ st.pg = pg; st.sel = null; st.full = false; st.allDP = false; st.openG.clear(); st.allG.clear(); hideTip(); render(); }
 
 document.querySelectorAll('input[name="fund"]').forEach(i => i.addEventListener('change', () => { st.fund = i.value; render(); }));
 document.querySelectorAll('input[name="measure"]').forEach(i => i.addEventListener('change', () => { st.measure = i.value; render(); }));
