@@ -32,6 +32,7 @@ The adopted budget treemap with the FY 2026-27 Fall Supplemental decision packag
 ## What it adds to the treemap
 
 - **Decision packages toggle:** *Base budget* (adopted only), *All DPs* (adopted plus every request; tiles show the percentage change), and *DPs only* (just the requested change; tile size is the size of the change and striped tiles are net decreases). Works with the existing fund, budget measure and bureau breakdown controls.
+- **Service impact toggle:** *All requests*, *Service impact* or *No service impact* limits which DPs are counted (sample tags in this mockup). It is turned off while *Base budget* is selected.
 - **Program narrative:** opening a program shows its description from the adopted budget book above the treemap. Programs with several sub-programs list each one; selecting a sub-program shows its full description and services.
 - **Decision packages by program:** below the treemap, a table of each sub-program's adopted budget, DP change and budget with DPs, then each request with its description, sample impact tag, a spending-category table (adopted, this request, change), its split across sub-programs, and positions.
 
