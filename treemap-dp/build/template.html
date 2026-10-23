@@ -930,13 +930,14 @@ function balanceTable(d){
     return mos.length ? mos.map(mo => `<tr><td>${esc(mo)}</td>${cols.map(c => td(S[a][mo][c]||0)).join('')}${tot ? td(rt(S[a][mo])) : ''}</tr>`).join('')
       : `<tr><td>None</td>${cols.map(() => '<td class="z">—</td>').join('')}${tot ? '<td class="z">—</td>' : ''}</tr>`; };
   const Rv = T(0), Ev = T(1), span = cols.length + 1 + (tot ? 1 : 0);
-  const diff = v => Math.abs(v) < 1 ? `<td class="ok">Balanced</td>` : `<td class="off">${money(v, true)}</td>`;
+  const diff = v => Math.abs(v) < 1 ? `<td class="z">—</td>` : `<td class="off">${money(v, true)}</td>`;
+  const unbalanced = cols.some(c => Math.abs((Rv[c]||0)-(Ev[c]||0)) >= 1);
   return `<div class="tw"><table><thead><tr><th>Fund</th>${cols.map(c => `<th>${c === '__o' ? `${other.length} other funds` : esc(c)}</th>`).join('')}${tot ? '<th>Total</th>' : ''}</tr></thead><tbody>
     <tr class="g"><td colspan="${span}">Resources</td></tr>${body(0)}
     <tr class="tot"><td>Total resources</td>${cols.map(c => tdT(Rv[c]||0)).join('')}${tot ? tdT(rt(Rv)) : ''}</tr>
     <tr class="g"><td colspan="${span}">Requirements</td></tr>${body(1)}
     <tr class="tot"><td>Total requirements</td>${cols.map(c => tdT(Ev[c]||0)).join('')}${tot ? tdT(rt(Ev)) : ''}</tr>
-    <tr class="net"><td>Resources less requirements</td>${cols.map(c => diff((Rv[c]||0)-(Ev[c]||0))).join('')}${tot ? diff(rt(Rv)-rt(Ev)) : ''}</tr>
+    ${unbalanced ? `<tr class="net"><td>Resources less requirements</td>${cols.map(c => diff((Rv[c]||0)-(Ev[c]||0))).join('')}${tot ? diff(rt(Rv)-rt(Ev)) : ''}</tr>` : ''}
   </tbody></table></div>${other.length ? `<p class="tnote">Other funds: ${other.map(esc).join('; ')}.</p>` : ''}`;
 }
 
