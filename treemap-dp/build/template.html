@@ -1,0 +1,718 @@
+<title>Budget Treemap with DPs</title>
+<meta name="description" content="Mockup: Portland's FY 2026-27 Adopted Budget treemap with Fall Supplemental decision packages, program descriptions and the requests that change each program.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: civic ledger — a slim masthead with the headline total, one control row, then the treemap beside a ranked ledger panel that stacks below on phones. */
+:root{
+  /* Single dark look, used in every browser regardless of system theme */
+  --bg:#0f1114; --surface:#171a1f; --ink:#eef0f3; --ink-2:#b8bec7; --muted:#878e99;
+  --line:#2a2f37; --line-strong:#3a414b; --focus:#86b6ef; --chip:#eef0f3; --chip-ink:#13161b;
+  --mix:44%; --mix-hover:60%; --mix-group:14%;
+  --c0:#3987e5; --c1:#d95926; --c2:#199e70; --c3:#c98500; --c4:#d55181; --c5:#008300; --c6:#9085e9; --c7:#e66767;
+  --font-ui:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-label:"Barlow Semi Condensed", "Arial Narrow", system-ui, sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.5;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:20px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.mast{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 32px;border-bottom:1px solid var(--line);padding-bottom:16px}
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0}
+h1{font-family:var(--font-label);font-weight:700;font-size:clamp(26px,4vw,38px);line-height:1.1;margin:4px 0 0;text-wrap:balance}
+.headline{text-align:right;min-width:0}
+.headline .num{font-family:var(--font-label);font-weight:700;font-size:clamp(30px,5vw,46px);line-height:1;letter-spacing:-.01em}
+.headline .cap{font-size:13px;color:var(--ink-2);margin-top:4px}
+@media (max-width:640px){.headline{text-align:left}}
+
+.controls{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end}
+.ctl{display:flex;flex-direction:column;gap:6px}
+.ctl-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:8px;padding:2px;background:var(--surface);gap:2px}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:6px 12px;border-radius:6px;font-size:14px;font-weight:500;color:var(--ink-2);cursor:pointer;white-space:nowrap;user-select:none}
+.seg label:hover{color:var(--ink);background:color-mix(in oklab, var(--ink) 6%, transparent)}
+.seg input:checked + label{background:var(--chip);color:var(--chip-ink)}
+.seg input:focus-visible + label{outline:2px solid var(--focus);outline-offset:2px}
+.ctl[aria-disabled="true"]{opacity:.4}
+.ctl[aria-disabled="true"] label{cursor:not-allowed}
+
+.crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;font-size:14px;min-height:28px}
+.crumbs button{all:unset;cursor:pointer;color:var(--ink-2);font-weight:500;padding:2px 4px;border-radius:4px}
+.crumbs button:hover{color:var(--ink);text-decoration:underline}
+.crumbs button:focus-visible{outline:2px solid var(--focus)}
+.crumbs .here{font-weight:700;color:var(--ink);padding:2px 4px}
+.crumbs .sep{color:var(--muted)}
+.crumbs .lvl{margin-left:auto;font-size:12px;color:var(--muted)}
+
+.main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.chart-col{display:flex;flex-direction:column;gap:8px;min-width:0}
+#tm{position:relative;width:100%;height:600px;background:var(--surface);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+@media (max-width:900px){#tm{height:480px}}
+@media (max-width:480px){#tm{height:420px}}
+.tile{position:absolute;all:unset;position:absolute;box-sizing:border-box;cursor:pointer;overflow:hidden;
+  background:color-mix(in oklab, var(--c) var(--mix), var(--surface));color:var(--ink);
+  padding:6px 7px;display:flex;flex-direction:column;gap:1px;border-radius:2px;
+  transition:left .32s ease, top .32s ease, width .32s ease, height .32s ease, background-color .15s}
+.tile:hover,.tile.sel{background:color-mix(in oklab, var(--c) var(--mix-hover), var(--surface))}
+.tile.sel{box-shadow:inset 0 0 0 2px var(--ink)}
+.tile:focus-visible{outline:2px solid var(--focus);outline-offset:-2px;z-index:3}
+.tile .nm{font-family:var(--font-label);font-weight:600;line-height:1.12;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;overflow-wrap:break-word;hyphens:auto}
+.tile .vl{font-family:var(--font-label);font-weight:500;color:var(--ink-2);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group{position:absolute;box-sizing:border-box;background:color-mix(in oklab, var(--c) var(--mix-group), var(--surface));border-radius:3px;
+  transition:left .32s ease, top .32s ease, width .32s ease, height .32s ease}
+.ghead{all:unset;position:absolute;box-sizing:border-box;left:0;top:0;right:0;height:22px;padding:2px 7px;cursor:pointer;
+  font-family:var(--font-label);font-weight:700;font-size:13px;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.ghead:hover{text-decoration:underline}
+.ghead:focus-visible{outline:2px solid var(--focus);outline-offset:-2px}
+.ghead .gv{font-weight:500;color:var(--ink-2);text-transform:none;margin-left:6px;font-variant-numeric:tabular-nums}
+.empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center;padding:24px;color:var(--ink-2)}
+.empty button,.btn{all:unset;cursor:pointer;border:1px solid var(--line-strong);border-radius:6px;padding:6px 12px;font-weight:600;color:var(--ink);background:var(--surface)}
+.empty button:focus-visible,.btn:focus-visible{outline:2px solid var(--focus)}
+.hint{font-size:13px;color:var(--muted)}
+.notes{font-size:13px;color:var(--ink-2)}
+.notes:empty{display:none}
+
+aside.panel{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:flex;flex-direction:column;gap:18px;min-width:0}
+.panel h2{font-family:var(--font-label);font-size:19px;font-weight:700;margin:0;line-height:1.2;text-wrap:balance}
+.panel h3{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.panel .sub{font-size:13px;color:var(--ink-2);margin:2px 0 0}
+.ledger{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.ledger li{border-top:1px solid var(--line)}
+.ledger li:first-child{border-top:0}
+.row{all:unset;box-sizing:border-box;display:grid;grid-template-columns:10px minmax(0,1fr) auto;gap:2px 8px;align-items:center;width:100%;padding:7px 2px;cursor:pointer;border-radius:4px}
+.row.static{cursor:default}
+.row:hover:not(.static),.row.sel{background:color-mix(in oklab, var(--ink) 5%, transparent)}
+.row:focus-visible{outline:2px solid var(--focus)}
+.sw{width:10px;height:10px;border-radius:2px;background:var(--c)}
+.row .n{font-size:14px;min-width:0;overflow-wrap:anywhere;line-height:1.3}
+.row .v{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;text-align:right}
+.row .bar{grid-column:2 / 4;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.row .bar i{display:block;height:100%;background:var(--c);border-radius:2px}
+.row .pct{color:var(--muted);font-weight:500;font-size:12px;margin-left:6px}
+.scroll{max-height:420px;overflow-y:auto;margin-right:-6px;padding-right:6px}
+.cats .row{cursor:default}
+
+#tip{position:fixed;z-index:20;pointer-events:none;max-width:300px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);
+  border-radius:6px;padding:10px 12px;box-shadow:0 6px 24px rgba(0,0,0,.45);font-size:13px;line-height:1.4}
+#tip .t{font-weight:700;font-size:14px;margin-bottom:2px}
+#tip .big{font-family:var(--font-label);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+#tip .m{color:var(--ink-2)}
+#tip .k{color:var(--muted);font-size:12px;margin-top:6px}
+#tip table{border-collapse:collapse;width:100%;margin-top:6px;font-variant-numeric:tabular-nums}
+#tip td{padding:1px 0;color:var(--ink-2)}
+#tip td:last-child{text-align:right;color:var(--ink)}
+
+footer.src{border-top:1px solid var(--line);padding-top:14px;font-size:13px;color:var(--ink-2);display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px 28px}
+footer.src p{margin:0;max-width:62ch}
+footer.src b{color:var(--ink)}
+@media (prefers-reduced-motion: reduce){.tile,.group{transition:none}}
+/* ---- decision packages ---- */
+:root{--up:#7db4f0;--down:#f0936b}
+.up{color:var(--up)} .down{color:var(--down)} .z{color:var(--muted)}
+.tile.neg{background:repeating-linear-gradient(135deg, color-mix(in oklab, var(--c) var(--mix), var(--surface)) 0 7px, color-mix(in oklab, var(--c) 20%, var(--surface)) 7px 12px)}
+.tile.neg:hover,.tile.neg.sel{background:repeating-linear-gradient(135deg, color-mix(in oklab, var(--c) var(--mix-hover), var(--surface)) 0 7px, color-mix(in oklab, var(--c) 30%, var(--surface)) 7px 12px)}
+.row.neg .bar i{background:repeating-linear-gradient(135deg, var(--c) 0 3px, transparent 3px 5px)}
+.row .dpc{display:block;font-size:12px;font-weight:500;margin-top:1px}
+.mocknote{font-size:13px;color:var(--ink-2);margin:-6px 0 0;max-width:110ch}
+.mocknote b{color:var(--ink)}
+.mocknote a{color:var(--ink-2)}
+.dot,.ring{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.dot{background:var(--ink)} .ring{box-shadow:inset 0 0 0 1.5px var(--ink)}
+#narr{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:18px 20px}
+#narr .nh{font-family:var(--font-label);font-size:22px;font-weight:700;margin:0 0 8px;line-height:1.2}
+.ntext,.nlead,.nlist p{font-size:15.5px;line-height:1.6;color:var(--ink-2);margin:0;max-width:82ch;white-space:pre-line}
+.ntext.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.nserv{font-size:13.5px;color:var(--muted);margin:10px 0 0;max-width:82ch}
+.nserv.clamp1{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.nserv b,.nlist .nlink{color:var(--ink)}
+.nlead{margin-bottom:10px;color:var(--muted);font-size:14px}
+.nlist{display:flex;flex-direction:column;gap:10px}
+.nlist p{white-space:normal}
+.nlink{all:unset;cursor:pointer;font-weight:700;text-decoration:underline;text-decoration-color:var(--line-strong);text-underline-offset:3px}
+.nlink:hover{text-decoration-color:var(--ink)}
+.nlink:focus-visible,.nmore:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.none{color:var(--muted);font-style:italic}
+.nmore{all:unset;cursor:pointer;color:var(--focus);font-size:13.5px;font-weight:500;margin:10px 16px 0 0;display:inline-block}
+.nmore:hover{text-decoration:underline}
+#dps{display:flex;flex-direction:column;gap:16px}
+#dps .dhead h2{font-family:var(--font-label);font-size:24px;font-weight:700;margin:0;line-height:1.2}
+#dps .sub{font-size:13.5px;color:var(--ink-2);margin:4px 0 0}
+.dnote{font-size:13.5px;color:var(--ink-2);margin:6px 0 0}
+.tw{overflow-x:auto;max-width:100%}
+#dps table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+#dps th{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 10px;border-bottom:1px solid var(--line-strong);white-space:nowrap}
+#dps td{text-align:right;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+#dps th:first-child,#dps td:first-child{text-align:left;padding-left:0;white-space:normal;min-width:150px}
+#dps tr.tot td{font-weight:700;border-top:1px solid var(--line-strong);border-bottom:0}
+table.sumt{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+table.sumt th:first-child,table.sumt td:first-child{padding-left:14px}
+article.dp{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px 18px}
+.dtop{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+.dtop h3{font-family:var(--font-label);font-size:19px;font-weight:700;margin:0;line-height:1.2}
+.dmeta{font-size:13px;color:var(--muted);margin:3px 0 0}
+.dmeta .imp{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.damt{font-family:var(--font-label);font-size:22px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap;text-align:right}
+.damt small{display:block;font-family:var(--font-ui);font-size:12.5px;font-weight:500;color:var(--muted)}
+.dbody{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px 28px;margin-top:12px}
+@media (max-width:900px){.dbody{grid-template-columns:minmax(0,1fr)}}
+.dtext p{font-size:14.5px;line-height:1.55;color:var(--ink-2);margin:0;max-width:75ch}
+.dtext p.clamp{display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.dtext .dsi{margin-top:10px;font-size:13.5px}
+.dtext .dsi b{color:var(--ink)}
+.dsplit{font-size:13px;color:var(--muted);margin:8px 0 0}
+details.dpos{margin-top:10px;font-size:13.5px}
+details.dpos summary{cursor:pointer;color:var(--ink-2);font-weight:600}
+details.dpos td small{display:block;color:var(--muted);font-size:12px}
+@media (max-width:560px){.dtop{flex-direction:column;gap:6px}.damt{text-align:left}}
+
+</style>
+
+<div class="wrap">
+  <header class="mast">
+    <div>
+      <p class="eyebrow">City of Portland · FY 2026-27 Adopted Budget and Fall Supplemental requests</p>
+      <h1 id="h1">Citywide budget</h1>
+    </div>
+    <div class="headline" aria-live="polite">
+      <div class="num" id="hnum">$8.55B</div>
+      <div class="cap" id="hcap">All funds · Total budget</div>
+    </div>
+  </header>
+
+  <p class="mocknote"><b>Mockup.</b> Adds the FY 2026-27 Fall Supplemental decision packages (DPs) to the <a href="../">adopted budget treemap</a>. Open any program to read its description and the requests that change it. Impact tags on requests are sample values.</p>
+
+  <div class="controls">
+    <div class="ctl">
+      <span class="ctl-label" id="lbl-dp">Decision packages</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-dp">
+        <input type="radio" name="dp" id="dp-base" value="base"><label for="dp-base">Base budget</label>
+        <input type="radio" name="dp" id="dp-all" value="all" checked><label for="dp-all">All DPs</label>
+        <input type="radio" name="dp" id="dp-only" value="dp"><label for="dp-only">DPs only</label>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" id="lbl-fund">Funds</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-fund">
+        <input type="radio" name="fund" id="fund-all" value="all" checked><label for="fund-all">All funds</label>
+        <input type="radio" name="fund" id="fund-gf" value="gf"><label for="fund-gf">General Fund</label>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label" id="lbl-measure">Budget measure</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-measure">
+        <input type="radio" name="measure" id="measure-total" value="total" checked><label for="measure-total">Total budget</label>
+        <input type="radio" name="measure" id="measure-op" value="op"><label for="measure-op">Operating</label>
+        <input type="radio" name="measure" id="measure-cap" value="cap"><label for="measure-cap">Capital</label>
+      </div>
+    </div>
+    <div class="ctl" id="ctl-by" aria-disabled="true">
+      <span class="ctl-label" id="lbl-by">Bureau breakdown</span>
+      <div class="seg" role="radiogroup" aria-labelledby="lbl-by">
+        <input type="radio" name="by" id="by-program" value="program" checked disabled><label for="by-program">By program</label>
+        <input type="radio" name="by" id="by-fund" value="fund" disabled><label for="by-fund">By fund</label>
+      </div>
+    </div>
+  </div>
+
+  <nav class="crumbs" id="crumbs" aria-label="Treemap level"></nav>
+
+  <section id="narr" aria-label="Program description" hidden></section>
+
+  <div class="main">
+    <div class="chart-col">
+      <div id="tm" role="group" aria-label="Budget treemap"></div>
+      <div class="hint" id="hint"></div>
+      <div class="notes" id="notes"></div>
+    </div>
+    <aside class="panel" id="panel" aria-live="polite"></aside>
+  </div>
+
+  <section id="dps" aria-label="Decision packages" hidden></section>
+
+  <footer class="src">
+    <p><b>Decision packages.</b> Fall TAO D7 decision package export (__LINES__ line items, __NDP__ packages), requested expense requirements of __TOTEXP__. The financial export leaves out personnel costs generated by positions, so the __POSCOST__ in position costs from the personnel export are added to Personnel and assigned to sub-programs by each position's functional area. <b>Base budget</b> is the adopted budget alone, <b>All DPs</b> adds every request, and <b>DPs only</b> shows just the requested change. Program descriptions are from the FY 2026-27 Adopted Budget book.</p>
+    <p><b>Source.</b> City of Portland Ad Hoc Reporting Tool export, FY 2026-27 Adopted Budget (expense requirements). All-funds total ties to the Adopted Budget's Table 1 ($8,546,060,062); the General Fund total ties to Figure 10 ($1,186,002,037).</p>
+    <p><b>Total budget</b> is the legal budget under Oregon Local Budget Law: bureau expenses plus fund-level requirements (contingency, debt service, fund transfers, reserves and ending fund balance). It counts internal transactions between funds more than once. <b>Capital</b> is spending on Capital Improvement Plan projects ($1.19B), and <b>Operating</b> is everything else ($7.35B), matching the Adopted Budget's Table 10.</p>
+    <p><b>General Fund</b> means Fund 100 only. Prosper Portland shows only its City-budgeted amount. Values are in nominal dollars; tiles under about 0.3% of the view may be too small to label, so hover or use the list to read them.</p>
+  </footer>
+</div>
+<div id="tip" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+const D = __DATA__;
+const GF = D.fd.findIndex(f => f.startsWith('100 '));
+const st = {fund:'all', measure:'total', by:'program', dp:'all', sa:null, bu:null, pg:null, sel:null, full:false, allDP:false};
+const $ = id => document.getElementById(id);
+const tm = $('tm'), tip = $('tip');
+const isDP = r => r.length > 7;
+
+function money(v, exact, signed){
+  const sg = v < 0 ? '−' : (signed && v > 0 ? '+' : '');
+  if (exact) return sg + '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+  const a = Math.abs(v);
+  if (a >= 1e9) return sg + '$' + (a/1e9).toFixed(2) + 'B';
+  if (a >= 1e8) return sg + '$' + (a/1e6).toFixed(0) + 'M';
+  if (a >= 1e6) return sg + '$' + (a/1e6).toFixed(1) + 'M';
+  if (a >= 1e3) return sg + '$' + (a/1e3).toFixed(0) + 'K';
+  return sg + '$' + a.toFixed(0);
+}
+const sm = v => money(v, false, st.dp === 'dp');           // signed only when showing DPs alone
+const pct = (a,b) => b ? (Math.abs(a/b*100) >= 10 ? (a/b*100).toFixed(0) : (a/b*100).toFixed(1)) + '%' : '—';
+const chg = (c, base) => !c ? '' : !base ? 'new' : (c > 0 ? '+' : '−') + Math.abs(c/base*100).toFixed(Math.abs(c/base*100) < 10 ? 1 : 0) + '%';
+const fundName = i => D.fd[i].replace(/^(\d+) - /, '');
+const fundNum = i => D.fd[i].split(' ')[0];
+const color = sa => `var(--c${sa})`;
+const fteS = v => { const r = Math.round(v*100)/100; return (r > 0 ? '+' : r < 0 ? '−' : '') + Math.abs(r).toLocaleString('en-US',{maximumFractionDigits:2}); };
+function esc(s){ return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ---------- rows: base budget, decision packages, or both ---------- */
+const keepRow = r => (st.fund === 'all' || r[2] === GF) && (st.measure === 'total' || r[4] === (st.measure === 'cap' ? 1 : 0));
+const baseRows = () => D.rows.filter(keepRow);
+const dpRows = () => D.dr.filter(keepRow);
+function rows(){ return st.dp === 'base' ? baseRows() : st.dp === 'dp' ? dpRows() : baseRows().concat(dpRows()); }
+
+// sums keep the DP share separately so tiles and lists can show the change
+function sumBy(rs, keyFn){
+  const m = new Map();
+  for (const r of rs){ const k = keyFn(r); const o = m.get(k) || {v:0, c:0}; o.v += r[6]; if (isDP(r)) o.c += r[6]; m.set(k, o); }
+  return m;
+}
+const total = rs => rs.reduce((s,r) => s + r[6], 0);
+const totalC = rs => rs.reduce((s,r) => s + (isDP(r) ? r[6] : 0), 0);
+const size = v => st.dp === 'dp' ? Math.abs(v) : v;
+const leafKey = V => V.level === 'program' ? (r => r[5]) : st.by === 'program' ? (r => r[1]) : (r => r[2]);
+
+/* ---------- build the current view ---------- */
+function view(){
+  const all = rows();
+  const cityTotal = total(all), cityC = totalC(all);
+  const mk = (m, f) => [...m].map(([k,o]) => ({k, v:o.v, c:o.c, ...f(k)}));
+  if (st.pg !== null){
+    const bscope = all.filter(r => r[0] === st.bu);
+    const scope = bscope.filter(r => r[1] === st.pg);
+    const items = mk(sumBy(scope, r => r[5]), k => ({id:'u'+k, name:D.sp[k], sa:D.buSA[st.bu], leaf:true}));
+    return {level:'program', all, scope, cityTotal, cityC, bureauTotal: total(bscope), nodeTotal: total(scope), nodeC: totalC(scope), items};
+  }
+  if (st.bu !== null){
+    const scope = all.filter(r => r[0] === st.bu);
+    const key = st.by === 'program' ? (r => r[1]) : (r => r[2]);
+    const items = mk(sumBy(scope, key), k => ({id:(st.by==='program'?'p':'f')+k,
+      name: st.by==='program' ? D.pg[k] : fundName(k), tag: st.by==='fund' ? 'Fund ' + fundNum(k) : '', sa: D.buSA[st.bu], leaf:true}));
+    return {level:'bureau', all, scope, cityTotal, cityC, nodeTotal: total(scope), nodeC: totalC(scope), items};
+  }
+  if (st.sa !== null){
+    const scope = all.filter(r => D.buSA[r[0]] === st.sa);
+    const items = mk(sumBy(scope, r => r[0]), k => ({id:'b'+k, name:D.bu[k], sa:st.sa, kind:'bu'}));
+    return {level:'sa', all, scope, cityTotal, cityC, nodeTotal: total(scope), nodeC: totalC(scope), items};
+  }
+  const groups = D.sa.map((name, i) => ({id:'s'+i, k:i, name, sa:i, kind:'sa', children:[]}));
+  for (const [k,o] of sumBy(all, r => r[0])) groups[D.buSA[k]].children.push({id:'b'+k, k, v:o.v, c:o.c, name:D.bu[k], sa:D.buSA[k], kind:'bu'});
+  groups.forEach(g => { g.v = g.children.reduce((s,c) => s + c.v, 0); g.c = g.children.reduce((s,c) => s + c.c, 0); });
+  return {level:'city', all, scope: all, cityTotal, cityC, nodeTotal: cityTotal, nodeC: cityC, groups: groups.filter(g => g.children.some(c => size(c.v) > 0))};
+}
+
+/* ---------- render ---------- */
+let lastLevelKey = '';
+function render(){
+  const V = view();
+  const levelKey = V.level + '|' + st.sa + '|' + st.bu + '|' + st.pg + '|' + st.by + '|' + st.dp;
+  const sameLevel = levelKey === lastLevelKey; lastLevelKey = levelKey;
+  if (!sameLevel) tm.innerHTML = '';
+
+  const scopeLabel = st.fund === 'all' ? 'All funds' : 'General Fund';
+  const measLabel = {total:'Total budget', op:'Operating budget', cap:'Capital budget'}[st.measure];
+  const dpLabel = st.dp === 'base' ? 'Adopted, before decision packages' : st.dp === 'dp' ? 'Decision packages only, net change'
+    : `Includes ${money(V.nodeC, false, true)} in decision packages`;
+  const where = st.pg !== null ? D.pg[st.pg] : st.bu !== null ? D.bu[st.bu] : st.sa !== null ? D.sa[st.sa] : (st.dp === 'dp' ? 'Citywide decision packages' : 'Citywide budget');
+  $('h1').textContent = where;
+  $('hnum').textContent = sm(V.nodeTotal);
+  $('hnum').title = money(V.nodeTotal, true, st.dp === 'dp');
+  $('hcap').textContent = `${scopeLabel} · ${measLabel} · ${dpLabel}` + (V.level !== 'city' && st.dp !== 'dp' ? ` · ${pct(V.nodeTotal, V.cityTotal)} of City ${st.fund === 'gf' ? 'General Fund' : 'total'}` : '');
+
+  const byOn = V.level === 'bureau';
+  $('ctl-by').setAttribute('aria-disabled', byOn ? 'false' : 'true');
+  $('by-program').disabled = $('by-fund').disabled = !byOn;
+
+  renderCrumbs(V);
+
+  let items, negs = [];
+  if (V.level === 'city'){
+    if (st.dp !== 'dp') V.groups.forEach(g => { negs.push(...g.children.filter(c => c.v < 0)); });
+    V.groups.forEach(g => g.children = g.children.filter(c => size(c.v) > 0));
+  } else {
+    if (st.dp !== 'dp') negs = V.items.filter(d => d.v < 0);
+    items = V.items.filter(d => size(d.v) > 0);
+  }
+
+  const W = tm.clientWidth, H = tm.clientHeight;
+  const hasData = V.level === 'city' ? V.groups.length : items.length;
+  tm.querySelectorAll('.empty').forEach(n => n.remove());
+  if (!hasData){
+    tm.innerHTML = '';
+    const e = document.createElement('div'); e.className = 'empty';
+    const name = st.pg !== null ? D.pg[st.pg] : st.bu !== null ? D.bu[st.bu] : st.sa !== null ? D.sa[st.sa] : 'The City';
+    e.innerHTML = st.dp === 'dp' ? `<div><b>${esc(name)}</b> has no decision packages${st.fund==='gf' ? ' in the General Fund' : ''} in this view.</div>`
+      : `<div><b>${esc(name)}</b> has no ${esc(measLabel.toLowerCase())}${st.fund==='gf' ? ' in the General Fund' : ''}.</div>`;
+    const b = document.createElement('button'); b.textContent = st.dp === 'dp' ? 'Show the budget with all DPs' : 'Show all funds, total budget';
+    b.onclick = () => { if (st.dp === 'dp'){ $('dp-all').checked = true; st.dp = 'all'; } else { $('fund-all').checked = true; $('measure-total').checked = true; st.fund = 'all'; st.measure = 'total'; } render(); };
+    e.appendChild(b); tm.appendChild(e); lastLevelKey = '';
+  } else {
+    let root;
+    if (V.level === 'city'){
+      root = d3.hierarchy({children: V.groups}).sum(d => d.children ? 0 : size(d.v)).sort((a,b) => b.value - a.value);
+      d3.treemap().size([W,H]).paddingOuter(d => d.depth === 1 ? 2 : 3).paddingTop(d => d.depth === 1 ? (d.y1 - d.y0 > 60 && d.x1 - d.x0 > 70 ? 22 : 2) : 3)
+        .paddingInner(d => d.depth === 0 ? 4 : 2).round(true).tile(d3.treemapSquarify.ratio(1.3))(root);
+    } else {
+      root = d3.hierarchy({children: items}).sum(d => d.children ? 0 : size(d.v)).sort((a,b) => b.value - a.value);
+      d3.treemap().size([W,H]).padding(2).round(true).tile(d3.treemapSquarify.ratio(1.3))(root);
+    }
+    drawNodes(root, V);
+  }
+
+  const dpHint = st.dp === 'dp' ? ' Tile size is the size of the change; striped tiles are net decreases.' : st.dp === 'all' ? ' Percentages on tiles are the change from decision packages.' : '';
+  $('hint').textContent = (V.level === 'city' ? 'Tiles are bureaus, grouped by service area. Select a bureau to open it, or a service area heading to see only that area.'
+    : V.level === 'sa' ? 'Select a bureau to break it down by program or fund.'
+    : V.level === 'program' ? (items && items.length === 1 ? 'This program has a single sub-program. Select it to see its funding detail.' : 'Tiles are sub-programs. Select one to see its description and funding detail.')
+    : st.by === 'program' ? 'Select a program to see its description, sub-programs and decision packages.'
+    : 'Select a fund to see which programs it pays for.') + dpHint;
+  $('notes').textContent = negs.length ? 'Not drawn because the amount nets below zero (offsetting credits): ' +
+    negs.map(n => `${n.name} (${money(n.v)})`).join('; ') + '. Totals above include it.' : '';
+
+  renderPanel(V);
+  renderNarrative(V);
+  renderDPs(V);
+}
+
+function drawNodes(root, V){
+  const keep = new Set();
+  const place = (el, n) => { el.style.left = n.x0+'px'; el.style.top = n.y0+'px'; el.style.width = Math.max(0,n.x1-n.x0)+'px'; el.style.height = Math.max(0,n.y1-n.y0)+'px'; };
+  if (V.level === 'city'){
+    for (const g of root.children){
+      const gid = 'g-' + g.data.id; keep.add(gid);
+      let ge = tm.querySelector(`[data-key="${gid}"]`);
+      if (!ge){
+        ge = document.createElement('div'); ge.className = 'group'; ge.dataset.key = gid;
+        ge.style.setProperty('--c', color(g.data.sa));
+        const h = document.createElement('button'); h.className = 'ghead';
+        h.onclick = () => go(g.data.k, null);
+        h.addEventListener('pointermove', ev => showTip(ev, g.data, view(), 'sa'));
+        h.addEventListener('pointerleave', hideTip);
+        ge.appendChild(h); tm.appendChild(ge);
+      }
+      place(ge, g);
+      const h = ge.querySelector('.ghead');
+      h.hidden = !(g.y1 - g.y0 > 60 && g.x1 - g.x0 > 70);
+      h.innerHTML = `${esc(g.data.name)}<span class="gv">${sm(g.data.v)}${st.dp === 'all' && g.data.c ? ' · ' + chg(g.data.c, g.data.v - g.data.c) : ''}</span>`;
+      h.setAttribute('aria-label', `${g.data.name} service area, ${sm(g.data.v)}. Open service area.`);
+    }
+  }
+  for (const n of root.leaves()){
+    const d = n.data, key = 't-' + d.id; keep.add(key);
+    let el = tm.querySelector(`[data-key="${key}"]`);
+    if (!el){
+      el = document.createElement('button'); el.className = 'tile'; el.dataset.key = key;
+      el.innerHTML = '<span class="nm"></span><span class="vl"></span>';
+      const kind = V.level === 'program' ? 'leaf' : V.level === 'bureau' ? (st.by === 'program' ? 'pg' : 'leaf') : 'bu';
+      el.addEventListener('pointermove', ev => showTip(ev, d, view(), kind));
+      el.addEventListener('pointerleave', hideTip);
+      el.addEventListener('click', () => {
+        hideTip();
+        if (kind === 'leaf'){ st.sel = st.sel === d.id ? null : d.id; st.full = false; render(); }
+        else if (kind === 'pg') goPg(d.k);
+        else go(d.sa, d.k);
+      });
+      tm.appendChild(el);
+    }
+    el.style.setProperty('--c', color(d.sa));
+    el.classList.toggle('neg', st.dp === 'dp' && d.v < 0);
+    place(el, n);
+    const w = n.x1 - n.x0, h = n.y1 - n.y0;
+    const longest = Math.max(...d.name.split(/\s+/).map(s => s.length));
+    const fs = Math.max(11, Math.min(20, Math.sqrt(w*h) / 11, (w - 14) / (longest * 0.55)));
+    const nm = el.querySelector('.nm'), vl = el.querySelector('.vl');
+    nm.style.fontSize = fs + 'px'; nm.style.webkitLineClamp = Math.max(1, Math.floor((h - 14 - fs) / (fs*1.12)));
+    vl.style.fontSize = Math.max(11, fs*0.82) + 'px';
+    const showName = w > 46 && h > 22, showVal = w > 54 && h > 22 + fs*1.6;
+    nm.textContent = showName ? d.name : ''; nm.hidden = !showName;
+    const c = st.dp === 'all' && d.c ? ' · ' + chg(d.c, d.v - d.c) : '';
+    vl.textContent = showVal ? sm(d.v) + c + (d.tag ? ' · ' + d.tag : '') : ''; vl.hidden = !showVal;
+    el.style.padding = (w < 40 || h < 26) ? '2px 4px' : '';
+    el.classList.toggle('sel', st.sel === d.id);
+    const isLeaf = V.level === 'program' || (V.level === 'bureau' && st.by === 'fund');
+    el.setAttribute('aria-label', `${d.name}, ${sm(d.v)}${c ? ', decision packages ' + money(d.c, false, true) : ''}. ` +
+      (isLeaf ? 'Show details.' : V.level === 'bureau' ? 'Open program.' : 'Open bureau.'));
+    if (isLeaf) el.setAttribute('aria-pressed', String(st.sel === d.id)); else el.removeAttribute('aria-pressed');
+  }
+  tm.querySelectorAll('[data-key]').forEach(el => { if (!keep.has(el.dataset.key)) el.remove(); });
+  tm.querySelectorAll('.tile').forEach(t => tm.appendChild(t));
+}
+
+function renderCrumbs(V){
+  const c = $('crumbs'); c.innerHTML = '';
+  const add = (label, fn) => {
+    if (fn){ const b = document.createElement('button'); b.textContent = label; b.onclick = fn; c.appendChild(b); }
+    else { const s = document.createElement('span'); s.className = 'here'; s.textContent = label; s.setAttribute('aria-current','page'); c.appendChild(s); }
+  };
+  const sep = () => { const s = document.createElement('span'); s.className = 'sep'; s.textContent = '›'; s.setAttribute('aria-hidden','true'); c.appendChild(s); };
+  add('City of Portland', V.level === 'city' ? null : () => go(null, null));
+  if (st.sa !== null){ sep(); add(D.sa[st.sa], V.level === 'sa' ? null : () => go(st.sa, null)); }
+  if (st.bu !== null){ sep(); add(D.bu[st.bu], V.level === 'bureau' ? null : () => go(st.sa, st.bu)); }
+  if (st.pg !== null){ sep(); add(D.pg[st.pg], null); }
+  const l = document.createElement('span'); l.className = 'lvl';
+  l.textContent = {city:'City level', sa:'Service area level', bureau:'Bureau level', program:'Program level'}[V.level];
+  c.appendChild(l);
+}
+
+/* ---------- side panel ---------- */
+function ledgerRow(d, base, onClick, selected){
+  const li = document.createElement('li');
+  const b = document.createElement(onClick ? 'button' : 'div');
+  b.className = 'row' + (onClick ? '' : ' static') + (selected ? ' sel' : '') + (st.dp === 'dp' && d.v < 0 ? ' neg' : '');
+  b.style.setProperty('--c', color(d.sa));
+  const w = base > 0 ? Math.max(0, Math.min(100, size(d.v) / base * 100)) : 0;
+  const c = st.dp === 'all' && d.c ? `<span class="dpc ${d.c < 0 ? 'down' : 'up'}">DPs ${money(d.c, false, true)}</span>` : '';
+  b.innerHTML = `<span class="sw"></span><span class="n">${esc(d.name)}${d.tag ? ` <span class="pct">${esc(d.tag)}</span>` : ''}${c}</span>
+    <span class="v">${sm(d.v)}<span class="pct">${pct(size(d.v), base)}</span></span><span class="bar"><i style="width:${w}%"></i></span>`;
+  if (onClick){ b.onclick = onClick; if (selected !== undefined) b.setAttribute('aria-pressed', String(!!selected)); }
+  li.appendChild(b); return li;
+}
+const absBase = list => list.reduce((s,d) => s + Math.abs(d.v), 0);
+const baseFor = (list, net) => st.dp === 'dp' ? absBase(list) : net;
+
+function renderPanel(V){
+  const p = $('panel'); p.innerHTML = '';
+  const head = document.createElement('div');
+  const sec = title => { const s = document.createElement('section'); s.innerHTML = `<h3>${esc(title)}</h3>`; return s; };
+  const ul = () => { const u = document.createElement('ul'); u.className = 'ledger'; return u; };
+  const ranked = (list) => list.slice().sort((a,b) => size(b.v) - size(a.v));
+  const what = st.dp === 'dp' ? 'net change from decision packages' : '';
+
+  if (V.level === 'city'){
+    head.innerHTML = `<h2>Service areas</h2><p class="sub">${sm(V.nodeTotal)} ${what || `across ${V.groups.length} service areas`}</p>`;
+    p.appendChild(head);
+    const s = sec(st.dp === 'dp' ? 'Ranked by size of change' : 'Ranked by budget'), u = ul();
+    ranked(V.groups).forEach(g => u.appendChild(ledgerRow(g, baseFor(V.groups, V.nodeTotal), () => go(g.k, null))));
+    s.appendChild(u); p.appendChild(s);
+    p.appendChild(catSection(V.scope, null));
+    return;
+  }
+  if (V.level === 'sa'){
+    head.innerHTML = `<h2>Bureaus in ${esc(D.sa[st.sa])}</h2><p class="sub">${sm(V.nodeTotal)} ${what || '· ' + pct(V.nodeTotal, V.cityTotal) + ' of the City total'}</p>`;
+    p.appendChild(head);
+    const s = sec(st.dp === 'dp' ? 'Ranked by size of change' : 'Ranked by budget'), u = ul(); u.classList.add('scroll');
+    ranked(V.items).forEach(d => u.appendChild(ledgerRow(d, baseFor(V.items, V.nodeTotal), () => go(d.sa, d.k))));
+    s.appendChild(u); p.appendChild(s);
+    p.appendChild(catSection(V.scope, st.sa));
+    return;
+  }
+  const isProg = V.level === 'program';
+  const drill = !isProg && st.by === 'program';
+  const sel = !drill && st.sel && V.items.find(d => d.id === st.sel);
+  if (st.sel && !sel) st.sel = null;
+  const sa = D.buSA[st.bu];
+  const unit = isProg ? 'sub-program' : st.by;
+  head.innerHTML = isProg
+    ? `<p class="sub" style="margin:0">${esc(D.bu[st.bu])}</p><h2>${esc(D.pg[st.pg])}</h2><p class="sub">${sm(V.nodeTotal)} ${what || '· ' + pct(V.nodeTotal, V.bureauTotal) + ' of bureau'} · ${V.items.length} sub-program${V.items.length === 1 ? '' : 's'}</p>`
+    : `<h2>${esc(D.bu[st.bu])}</h2><p class="sub">${sm(V.nodeTotal)} ${what || '· ' + pct(V.nodeTotal, V.cityTotal) + ' of the City total'} · ${V.items.length} ${unit}${V.items.length === 1 ? '' : 's'}</p>`;
+  p.appendChild(head);
+  const s = sec(isProg ? 'Sub-programs' : st.by === 'program' ? 'Programs' : 'Funds'), u = ul(); u.classList.add('scroll');
+  const base = baseFor(V.items, V.nodeTotal);
+  ranked(V.items).forEach(d => u.appendChild(drill
+    ? ledgerRow(d, base, () => goPg(d.k))
+    : ledgerRow(d, base, () => { st.sel = st.sel === d.id ? null : d.id; st.full = false; render(); }, st.sel === d.id)));
+  s.appendChild(u); p.appendChild(s);
+
+  const crossSec = (rs) => {
+    const byFund = isProg || st.by === 'program';
+    const list = [...sumBy(rs, byFund ? (r => r[2]) : (r => r[1]))].filter(([,o]) => Math.round(o.v) !== 0)
+      .map(([k,o]) => ({name: byFund ? fundName(k) : D.pg[k], tag: byFund ? 'Fund ' + fundNum(k) : '', v:o.v, c:o.c, sa}));
+    const cs = sec(byFund ? 'Funded by' : 'Programs in this fund'), cu = ul();
+    const b = baseFor(list, total(rs));
+    ranked(list).forEach(d => cu.appendChild(ledgerRow(d, b)));
+    cs.appendChild(cu); return cs;
+  };
+  if (sel){
+    const rs = V.scope.filter(r => leafKey(V)(r) === sel.k);
+    const box = document.createElement('section'); box.className = 'selbox';
+    box.innerHTML = `<div><h3>Selected ${unit}</h3><h2 style="font-size:17px">${esc(sel.name)}</h2><p class="sub">${money(sel.v, true, st.dp === 'dp')}${st.dp !== 'dp' ? ' · ' + pct(sel.v, V.nodeTotal) + ' of ' + (isProg ? 'program' : 'bureau') : ''}</p></div>`;
+    box.appendChild(crossSec(rs));
+    box.appendChild(catSection(rs, sa));
+    const clr = document.createElement('button'); clr.className = 'btn'; clr.textContent = 'Clear selection'; clr.style.alignSelf = 'flex-start';
+    clr.onclick = () => { st.sel = null; render(); };
+    box.appendChild(clr); p.appendChild(box);
+  } else {
+    if (isProg) p.appendChild(crossSec(V.scope));
+    p.appendChild(catSection(V.scope, sa));
+  }
+}
+
+function catSection(rs, sa){
+  const m = sumBy(rs, r => r[3]);
+  const list = D.mo.map((mo, i) => ({name: mo[1], ...(m.get(i) || {v:0, c:0}), sa: sa === null ? 'x' : sa})).filter(d => Math.round(d.v) !== 0);
+  const s = document.createElement('section'); s.className = 'cats';
+  s.innerHTML = '<h3>By spending category</h3>';
+  const u = document.createElement('ul'); u.className = 'ledger';
+  const b = baseFor(list, total(rs));
+  list.forEach(d => u.appendChild(ledgerRow(d, b)));
+  if (sa === null) u.querySelectorAll('.row').forEach(r => r.style.setProperty('--c', 'var(--ink-2)'));
+  s.appendChild(u); return s;
+}
+
+/* ---------- program narrative (adopted budget book) ---------- */
+function firstSentences(t, n){
+  const flat = t.replace(/\s*\n+\s*/g, ' ').trim();
+  const parts = flat.split(/(?<=[.!?])\s+(?=[A-Z(“"])/);
+  return parts.slice(0, n).join(' ');
+}
+function programSubs(){
+  // every sub-program in this program, from the base budget and the requests, regardless of filters
+  const set = new Set();
+  D.rows.concat(D.dr).forEach(r => { if (r[0] === st.bu && r[1] === st.pg) set.add(r[5]); });
+  return [...set];
+}
+function renderNarrative(V){
+  const box = $('narr');
+  if (V.level !== 'program'){ box.hidden = true; box.innerHTML = ''; return; }
+  const subs = programSubs();
+  const selSp = st.sel ? +st.sel.slice(1) : null;
+  const one = selSp !== null ? [selSp] : subs.length === 1 ? subs : null;
+  const D_ = k => D.desc[`${st.bu}|${k}`];
+  let h = '';
+  if (one){
+    const k = one[0], x = D_(k);
+    h = `<h2 class="nh">${esc(D.sp[k])}</h2>` + (x
+      ? `<div class="ntext${st.full ? '' : ' clamp'}">${esc(x.d)}</div>${x.s ? `<p class="nserv${st.full ? '' : ' clamp1'}"><b>Services.</b> ${esc(x.s)}</p>` : ''}
+         <button type="button" class="nmore" id="nmore">${st.full ? 'Show less' : 'Read the full description'}</button>`
+      : `<p class="ntext none">The adopted budget book has no description for this program offer.</p>`)
+      + (selSp !== null && subs.length > 1 ? `<button type="button" class="nmore" id="nall">Back to all of ${esc(D.pg[st.pg])}</button>` : '');
+  } else {
+    const ranked = subs.map(k => ({k, v: Math.abs(V.items.find(d => d.k === k)?.v || 0)})).sort((a,b) => b.v - a.v);
+    const LIM = 4, shown = st.full ? ranked : ranked.slice(0, LIM);
+    h = `<h2 class="nh">About ${esc(D.pg[st.pg])}</h2><p class="nlead">${esc(D.pg[st.pg])} is made up of ${subs.length} sub-programs. Select one here or in the treemap for its full description.</p>
+      <div class="nlist">${shown.map(({k}) => { const x = D_(k);
+        return `<p><button type="button" class="nlink" data-sp="${k}">${esc(D.sp[k])}</button>${x ? ' ' + esc(st.full ? x.d : firstSentences(x.d, 1)) : ' <span class="none">No description in the adopted budget book.</span>'}</p>`; }).join('')}</div>
+      <button type="button" class="nmore" id="nmore">${st.full ? 'Show shorter descriptions' : ranked.length > LIM ? `Show all ${ranked.length} sub-programs with full descriptions` : 'Read the full descriptions'}</button>`;
+  }
+  box.innerHTML = h; box.hidden = false;
+  const m = $('nmore'); if (m) m.onclick = () => { st.full = !st.full; renderNarrative(view()); };
+  const a = $('nall'); if (a) a.onclick = () => { st.sel = null; st.full = false; render(); };
+  box.querySelectorAll('.nlink').forEach(b => b.onclick = () => { st.sel = 'u' + b.dataset.sp; st.full = false; render(); });
+}
+
+/* ---------- decision packages for this program ---------- */
+const MOI = D.mo.map((m, i) => i);
+function renderDPs(V){
+  const box = $('dps');
+  if (V.level !== 'program'){ box.hidden = true; box.innerHTML = ''; return; }
+  const selSp = st.sel ? +st.sel.slice(1) : null;
+  const inProg = r => r[0] === st.bu && r[1] === st.pg && keepRow(r);
+  const base = D.rows.filter(inProg), req = D.dr.filter(inProg);
+  const subs = programSubs();
+  const bySp = (rs, k) => rs.filter(r => r[5] === k).reduce((s,r) => s + r[6], 0);
+  // summary: each sub-program, adopted vs with all requests
+  const sumRows = subs.map(k => ({k, b: bySp(base, k), c: bySp(req, k)})).filter(x => x.b || x.c).sort((a,b) => b.b - a.b);
+  const tb = sumRows.reduce((s,x) => s + x.b, 0), tc = sumRows.reduce((s,x) => s + x.c, 0);
+  const dpIds = [...new Set(req.filter(r => selSp === null || r[5] === selSp).map(r => r[7]))];
+  const dpAmt = i => req.filter(r => r[7] === i && (selSp === null || r[5] === selSp)).reduce((s,r) => s + r[6], 0);
+  dpIds.sort((a,b) => Math.abs(dpAmt(b)) - Math.abs(dpAmt(a)));
+  const filt = (st.fund === 'gf' ? 'General Fund' : 'all funds') + (st.measure === 'total' ? '' : st.measure === 'cap' ? ', capital only' : ', operating only');
+  const mode = st.dp === 'base' ? `<p class="dnote">These requests are not included in the treemap while <b>Base budget</b> is selected.</p>` : '';
+  let h = `<div class="dhead"><h2>Decision packages changing ${esc(selSp !== null ? D.sp[selSp] : D.pg[st.pg])}</h2>
+    <p class="sub">${dpIds.length} request${dpIds.length === 1 ? '' : 's'}, ${money(selSp !== null ? sumRows.find(x => x.k === selSp)?.c || 0 : tc, true, true)} in ${filt}. Impact tags are sample values for this mockup.</p>${mode}</div>`;
+  if (sumRows.length && selSp === null){
+    h += `<div class="tw"><table class="sumt"><thead><tr><th>Sub-program</th><th>Adopted</th><th>Decision packages</th><th>With DPs</th><th>Change</th></tr></thead><tbody>
+      ${sumRows.map(x => `<tr><td>${esc(D.sp[x.k])}</td><td>${money(x.b, true)}</td><td class="${x.c > 0 ? 'up' : x.c < 0 ? 'down' : 'z'}">${x.c ? money(x.c, true, true) : '—'}</td><td>${money(x.b + x.c, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
+      ${sumRows.length > 1 ? `<tr class="tot"><td>${esc(D.pg[st.pg])}</td><td>${money(tb, true)}</td><td class="${tc > 0 ? 'up' : tc < 0 ? 'down' : ''}">${money(tc, true, true)}</td><td>${money(tb + tc, true)}</td><td>${chg(tc, tb) || '—'}</td></tr>` : ''}
+    </tbody></table></div>`;
+  }
+  if (!dpIds.length) h += `<p class="dnote">No decision packages change this ${selSp !== null ? 'sub-program' : 'program'} in ${filt}.</p>`;
+  const LIMD = 6, shownIds = st.allDP ? dpIds : dpIds.slice(0, LIMD);
+  h += shownIds.map(i => dpCard(i, base, req, selSp)).join('');
+  if (dpIds.length > LIMD) h += `<button type="button" class="btn" id="dpall" style="align-self:flex-start">${st.allDP ? `Show the ${LIMD} largest requests` : `Show all ${dpIds.length} requests`}</button>`;
+  box.innerHTML = h; box.hidden = false;
+  const da = $('dpall'); if (da) da.onclick = () => { st.allDP = !st.allDP; renderDPs(view()); };
+  box.querySelectorAll('[data-more]').forEach(b => b.onclick = () => {
+    const t = document.getElementById(b.dataset.more); const c = t.classList.toggle('clamp'); b.textContent = c ? 'Read more' : 'Show less'; });
+}
+
+function dpCard(i, base, req, selSp){
+  const d = D.dp[i];
+  const mine = req.filter(r => r[7] === i && (selSp === null || r[5] === selSp));
+  const baseScope = selSp === null ? base : base.filter(r => r[5] === selSp);
+  const amt = mine.reduce((s,r) => s + r[6], 0);
+  // by spending category: adopted base for this program vs this request
+  const cats = MOI.map(m => ({m, b: baseScope.filter(r => r[3] === m).reduce((s,r) => s + r[6], 0), c: mine.filter(r => r[3] === m).reduce((s,r) => s + r[6], 0)})).filter(x => x.c);
+  const subs = [...new Set(mine.map(r => r[5]))];
+  const spSplit = subs.length > 1 ? `<p class="dsplit">By sub-program: ${subs.map(k => `${esc(D.sp[k])} ${money(mine.filter(r => r[5] === k).reduce((s,r) => s + r[6], 0), false, true)}`).join('; ')}.</p>` : '';
+  const elsewhere = D.dr.filter(r => r[7] === i && !(r[0] === st.bu && r[1] === st.pg)).reduce((s,r) => s + r[6], 0);
+  const pos = D.dpos.filter(p => p[0] === i && subs.includes(p[1]));
+  const fte = pos.reduce((s,p) => s + p[4], 0);
+  const desc = d.d || 'No description provided.';
+  const real = d.sit && !/^(none|n\/?a|no service impacts?\.?|there (is|are|will be) no)/i.test(d.sit);
+  const tb = baseScope.reduce((s,r) => s + r[6], 0);
+  return `<article class="dp">
+    <div class="dtop"><div><h3>${esc(d.n)}</h3>
+      <p class="dmeta">DP ${d.id} · ${esc(d.rt)} · <span class="imp"><span class="${d.si ? 'dot' : 'ring'}" aria-hidden="true"></span>${d.si ? 'Service impact' : 'No service impact'}, ${esc(d.tp)}</span></p></div>
+      <div class="damt ${amt > 0 ? 'up' : amt < 0 ? 'down' : ''}">${money(amt, true, true)}${fte ? `<small>${fteS(fte)} FTE</small>` : ''}</div></div>
+    <div class="dbody">
+      <div class="dtext"><p class="clamp" id="dd-${d.id}">${esc(desc)}</p>${desc.length > 360 ? `<button type="button" class="nmore" data-more="dd-${d.id}">Read more</button>` : ''}
+        ${real ? `<p class="dsi"><b>Service impacts.</b> ${esc(d.sit)}</p>` : ''}</div>
+      <div class="tw"><table><thead><tr><th>Spending category</th><th>Adopted</th><th>This request</th><th>Change</th></tr></thead><tbody>
+        ${cats.map(x => `<tr><td>${esc(D.mo[x.m][1])}</td><td>${money(x.b, true)}</td><td class="${x.c > 0 ? 'up' : 'down'}">${money(x.c, true, true)}</td><td class="z">${chg(x.c, x.b) || '—'}</td></tr>`).join('')}
+        <tr class="tot"><td>${selSp !== null ? 'Sub-program' : 'Program'} total</td><td>${money(tb, true)}</td><td class="${amt > 0 ? 'up' : amt < 0 ? 'down' : ''}">${money(amt, true, true)}</td><td>${chg(amt, tb) || '—'}</td></tr>
+      </tbody></table>
+      ${spSplit}
+      ${pos.length ? `<details class="dpos"><summary>${pos.length} position${pos.length === 1 ? '' : 's'}, ${fteS(fte)} FTE</summary><table><tbody>${pos.map(p => `<tr><td>${esc(p[2])}<small>${esc(p[3])}${subs.length > 1 ? ', ' + esc(D.sp[p[1]]) : ''}</small></td><td>${fteS(p[4])} FTE</td><td class="${p[5] < 0 ? 'down' : ''}">${money(p[5], true)}</td></tr>`).join('')}</tbody></table></details>` : ''}
+      ${elsewhere ? `<p class="dsplit">This request also changes other programs by ${money(elsewhere, false, true)}, for ${money(d.e, false, true)} in total.</p>` : ''}
+      </div>
+    </div></article>`;
+}
+
+/* ---------- tooltip ---------- */
+function showTip(ev, d, V, kind){
+  if (ev.pointerType === 'touch') return;
+  let rs;
+  if (kind === 'sa') rs = V.all.filter(r => D.buSA[r[0]] === d.k);
+  else if (kind === 'bu') rs = V.all.filter(r => r[0] === d.k);
+  else rs = V.scope.filter(r => leafKey(V)(r) === d.k);
+  const v = total(rs), c = totalC(rs);
+  const cats = [...sumBy(rs, r => r[3])].filter(([,o]) => Math.round(o.v) !== 0).sort((a,b) => Math.abs(b[1].v) - Math.abs(a[1].v)).slice(0,4);
+  const n = new Set(rs.filter(isDP).map(r => r[7])).size;
+  const base = kind === 'sa' ? V.cityTotal : V.nodeTotal;
+  const rel = kind === 'sa' || V.level === 'city' ? 'of City' : V.level === 'sa' ? 'of service area' : V.level === 'program' ? 'of program' : 'of bureau';
+  const dpLine = st.dp === 'all' ? `<div class="m">Adopted ${money(v - c)} · ${n} DP${n === 1 ? '' : 's'} ${money(c, false, true)}</div>`
+    : st.dp === 'dp' ? `<div class="m">Net change from ${n} decision package${n === 1 ? '' : 's'}</div>` : '';
+  tip.innerHTML = `<div class="t">${esc(d.name)}</div>` + (d.tag ? `<div class="m">${esc(d.tag)}</div>` : '') +
+    `<div class="big">${money(v, true, st.dp === 'dp')}</div>` + dpLine + (st.dp !== 'dp' ? `<div class="m">${pct(v, base)} ${rel}</div>` : '') +
+    `<table>${cats.map(([k,o]) => `<tr><td>${esc(D.mo[k][1])}</td><td>${sm(o.v)}</td></tr>`).join('')}</table>` +
+    `<div class="k">${kind === 'leaf' ? 'Select for details' : kind === 'pg' ? 'Select for description, sub-programs and DPs' : kind === 'sa' ? 'Select to open service area' : 'Select to open bureau'}</div>`;
+  tip.hidden = false;
+  const pad = 14, r = tip.getBoundingClientRect();
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + r.width > innerWidth - 8) x = ev.clientX - r.width - pad;
+  if (y + r.height > innerHeight - 8) y = ev.clientY - r.height - pad;
+  tip.style.left = Math.max(8, x) + 'px'; tip.style.top = Math.max(8, y) + 'px';
+}
+function hideTip(){ tip.hidden = true; }
+
+/* ---------- navigation ---------- */
+function go(sa, bu){ st.sa = sa; st.bu = bu; st.pg = null; st.sel = null; st.full = false; hideTip(); render(); }
+function goPg(pg){ st.pg = pg; st.sel = null; st.full = false; st.allDP = false; hideTip(); render(); }
+
+document.querySelectorAll('input[name="fund"]').forEach(i => i.addEventListener('change', () => { st.fund = i.value; render(); }));
+document.querySelectorAll('input[name="measure"]').forEach(i => i.addEventListener('change', () => { st.measure = i.value; render(); }));
+document.querySelectorAll('input[name="dp"]').forEach(i => i.addEventListener('change', () => { st.dp = i.value; render(); }));
+document.querySelectorAll('input[name="by"]').forEach(i => i.addEventListener('change', () => { st.by = i.value; st.pg = null; st.sel = null; render(); }));
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape'){ if (st.sel){ st.sel = null; render(); } else if (st.pg !== null) go(st.sa, st.bu); else if (st.bu !== null) go(st.sa, null); else if (st.sa !== null) go(null, null); }
+});
+let rt; new ResizeObserver(() => { clearTimeout(rt); rt = setTimeout(render, 80); }).observe(tm);
+render();
+</script>

@@ -23,6 +23,31 @@ Prosper Portland shows only its City-budgeted amount.
 
 ---
 
+# Budget Treemap with Decision Packages (mockup)
+
+The adopted budget treemap with the FY 2026-27 Fall Supplemental decision packages (DPs) merged in.
+
+**Live site:** https://brycelied.github.io/PortlandBudget/treemap-dp/
+
+## What it adds to the treemap
+
+- **Decision packages toggle:** *Base budget* (adopted only), *All DPs* (adopted plus every request; tiles show the percentage change), and *DPs only* (just the requested change; tile size is the size of the change and striped tiles are net decreases). Works with the existing fund, budget measure and bureau breakdown controls.
+- **Program narrative:** opening a program shows its description from the adopted budget book above the treemap. Programs with several sub-programs list each one; selecting a sub-program shows its full description and services.
+- **Decision packages by program:** below the treemap, a table of each sub-program's adopted budget, DP change and budget with DPs, then each request with its description, sample impact tag, a spending-category table (adopted, this request, change), its split across sub-programs, and positions.
+
+Totals tie to the adopted budget ($8,546,060,062; General Fund $1,186,002,037) and the requested changes ($530,518,741; General Fund $42,711,774). DP position costs are added to Personnel as operating spending; DP lines are counted as capital when their project is a CIP project (same rule as the adopted Capital measure).
+
+## Rebuild
+
+```
+python3 dp/build/prep.py <DP export.xlsx> dp/build/bureau_sa.csv dp.json
+python3 dp/build/prep_programs.py <DP export.xlsx> <Ad Hoc.xlsx> dp/build/bureau_sa.csv dp.json dp/build/program_descriptions.json prog.json
+python3 treemap-dp/build/prep_treemap.py index.html <DP export.xlsx> <Ad Hoc.xlsx> prog.json tmdp.json
+python3 dp/build/build.py treemap-dp/build/template.html tmdp.json treemap-dp/index.html
+```
+
+---
+
 # Fall Budget Requests, Program by Program (mockup)
 
 A mockup of a public report showing how decision packages (DPs) in the FY 2026-27 Fall Supplemental Budget would change each program's adopted budget.
